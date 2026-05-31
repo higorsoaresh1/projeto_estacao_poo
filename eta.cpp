@@ -39,7 +39,8 @@ public:
 
     void monitorar_bomba(Bomba *b)
     {
-        b->ajustar_tensao(0.0); // Exemplo de ajuste de tensão para a bomba
+        b->ligar();
+        b->desligar();
     }
 
     void acionar_alarme()
@@ -81,12 +82,11 @@ class Bomba
 private:
     string tag;
     string area;
-    double tensao;
     bool operando;
 
 public:
     Bomba(string tag_nova, string area_nova)
-        : tag(tag_nova), area(area_nova), tensao(0.0), operando(false) {}
+        : tag(tag_nova), area(area_nova), operando(false) {}
 
     void ligar()
     {
@@ -98,12 +98,6 @@ public:
     {
         operando = false;
         cout << "Bomba " << tag << " desligada." << endl;
-    }
-
-    void ajustar_tensao(double nova_tensao)
-    {
-        tensao = nova_tensao;
-        cout << "Tensão da bomba " << tag << " ajustada para " << tensao << "V." << endl;
     }
 };
 
