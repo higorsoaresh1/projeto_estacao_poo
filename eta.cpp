@@ -37,8 +37,9 @@ private:
 public:
     Controlador(string tag_nova) : tag(tag_nova) {}
 
-    void ajustar_bomba()
+    void monitorar_bomba(Bomba *b)
     {
+        b->ajustar_tensao(0.0); // Exemplo de ajuste de tensão para a bomba
     }
 
     void acionar_alarme()
@@ -80,11 +81,12 @@ class Bomba
 private:
     string tag;
     string area;
+    double tensao;
     bool operando;
 
 public:
     Bomba(string tag_nova, string area_nova)
-        : tag(tag_nova), area(area_nova), operando(false) {}
+        : tag(tag_nova), area(area_nova), tensao(0.0), operando(false) {}
 
     void ligar()
     {
@@ -96,6 +98,12 @@ public:
     {
         operando = false;
         cout << "Bomba " << tag << " desligada." << endl;
+    }
+
+    void ajustar_tensao(double nova_tensao)
+    {
+        tensao = nova_tensao;
+        cout << "Tensão da bomba " << tag << " ajustada para " << tensao << "V." << endl;
     }
 };
 
@@ -110,13 +118,13 @@ public:
     Alarme(string tag_nova, string area_nova, bool ativo_novo = false)
         : tag(tag_nova), area(area_nova), ativo(ativo_novo) {}
 
-    void disparar()
+    virtual void disparar()
     {
         ativo = true;
         cout << "Alarme " << tag << " ativado." << endl;
     }
 
-    void silenciar()
+    virtual void silenciar()
     {
         ativo = false;
         cout << "Alarme " << tag << " desativado." << endl;
@@ -129,18 +137,54 @@ class alarme_ph : public Alarme
 {
 public:
     using Alarme::Alarme;
+
+    void disparar() override
+    {
+        ativo = true;
+        cout << "Alarme de pH " << tag << " ativado." << endl;
+    }
+
+    void silenciar() override
+    {
+        ativo = false;
+        cout << "Alarme de pH " << tag << " desativado." << endl;
+    }
 };
 
 class alarme_nivel_alto : public Alarme
 {
 public:
     using Alarme::Alarme;
+
+    void disparar() override
+    {
+        ativo = true;
+        cout << "Alarme de nível alto " << tag << " ativado." << endl;
+    }
+
+    void silenciar() override
+    {
+        ativo = false;
+        cout << "Alarme de nível alto " << tag << " desativado." << endl;
+    }
 };
 
 class alarme_vazao : public Alarme
 {
 public:
     using Alarme::Alarme;
+
+    void disparar() override
+    {
+        ativo = true;
+        cout << "Alarme de vazão " << tag << " ativado." << endl;
+    }
+
+    void silenciar() override
+    {
+        ativo = false;
+        cout << "Alarme de vazão " << tag << " desativado." << endl;
+    }
 };
 
 class Historico
@@ -161,6 +205,11 @@ public:
     Sensor(string tag_nova, string area_nova, double valor_lido_novo, double valor_minimo_novo, double valor_maximo_novo)
         : tag(tag_nova), area(area_nova), valor_lido(valor_lido_novo), valor_minimo(valor_minimo_novo), valor_maximo(valor_maximo_novo) {}
 
+    virtual void ler_valor()
+    {
+        cout << "Lendo valor do sensor " << tag << " na área " << area << "." << endl;
+    }
+
     virtual ~Sensor() = default;
 };
 
@@ -168,28 +217,62 @@ class sensor_ph : public Sensor
 {
 public:
     using Sensor::Sensor;
+
+    void ler_valor() override
+    {
+        cout << "Lendo valor do sensor de pH " << tag << " na área " << area << "." << endl;
+    }
 };
 
 class sensor_turbidez : public Sensor
 {
 public:
     using Sensor::Sensor;
+
+    void ler_valor() override
+    {
+        cout << "Lendo valor do sensor de turbidez " << tag << " na área " << area << "." << endl;
+    }
 };
 
 class sensor_nivel : public Sensor
 {
 public:
     using Sensor::Sensor;
+
+    void ler_valor() override
+    {
+        cout << "Lendo valor do sensor de nível " << tag << " na área " << area << "." << endl;
+    }
 };
 
 class sensor_vazao : public Sensor
 {
 public:
     using Sensor::Sensor;
+
+    void ler_valor() override
+    {
+        cout << "Lendo valor do sensor de vazão " << tag << " na área " << area << "." << endl;
+    }
 };
 
 int main()
 {
     vector<unique_ptr<Sensor>> sensores;
-    vector<unique_ptr<Alarme>> alarmes;
+
+    sensor_nivel nivel_sensor("LT-101", "Área 2", 5.0, 0.0, 10.0);
+    sensor_turbidez turbidez_sensor("TB-001", "Área 1", 0.5, 0.0, 1.0);
+    sensor_vazao vazao_sensor("FT-301", "Área 3", 100.0, 0.0, 200.0);
+    sensor_ph ph_sensor("PH-001", "Área 1", 7.0, 6.0, 8.0);
+
+    sensores.push_back(make_unique<sensor_nivel>("LT-101"));
+    sensores.push_back(make_unique<sensor_turbidez>("TB-001"));
+    sensores.push_back(make_unique<sensor_vazao>("FT-301"));
+    sensores.push_back(make_unique<sensor_ph>("PH-001"));
+
+    for (const auto &sensor : sensores)
+    {
+        sensor->ler_valor();
+    }
 }
