@@ -14,3 +14,9 @@ Preencha uma linha por interacao relevante com IA.
 - 30/05/2026: Herança de construtores. ex: using Sensor::Sensor;
 ->aceito: Estrutura de herança de construtores;
 ->justificativa: Melhorar a fluidez do código.
+
+- 06/06/2026: Auxilio na construção de um sistema de malha fechada
+->aceito: A melhor utilização da classe de reservatório e do sensor de vazão, a partir da criação de atributos e métodos mais úteis para um sistema de malha fechada que seja funcional;
+->rejeitado: Transformação da classe de sensor de vazão em uma estrutura mais complexa;
+->justificativa: Aprimorar o funcionamento do código, buscar maior fidelidade a um sistema real e evitar sistemas complexos que sejam desconexos com a integridade do projeto.
+
