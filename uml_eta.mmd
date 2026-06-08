@@ -1,0 +1,95 @@
+---
+config:
+  layout: elk
+  look: classic
+---
+classDiagram
+direction TB
+    class ETA {
+      -localizacao: string
+      -operando: bool
+      +iniciar_tratamento()
+      +parar_sistema()
+    }
+
+    class Controlador {
+      -tag: string
+      -setpoint: double
+      +ajustar_bomba()
+      +acionar_alarme()
+      +acessar_historico()
+      +consultar_sensor()
+      +ajustar_sensor()
+    }
+
+    class Tanque {
+      
+    }
+
+    class Sensor {
+      <<abstract>>
+      -tag: string
+      -valor_lido: float
+      -area: string
+      +calibrar()
+      +ajustar_faixa()
+      +retornar_valor()
+    }
+
+    class Bomba {
+      -tag: string
+      -area: string
+      -bool: ativo
+      +ligar()
+      +desligar()
+    }
+
+    class Alarme {
+      -tag: string
+      -area: string
+      +disparar()
+      +silenciar()
+    }
+
+    class Histórico {
+      -registros: List<Leitura>
+      +exibir_historico()
+      +adicionar_registro()
+    }
+
+    class `Reservatório` {
+      #capacidade_max
+    }
+
+    class `Sensor_Nível` {
+      -nivel_minimo
+      -nivel_maximo
+    }
+
+    class Sensor_pH {
+      -pH_minimo
+      -pH_maximo
+    }
+
+    class Sensor_Turbidez {
+      -turbidez_minima
+      -turbidez_maxima
+    }
+
+    class Sensor_Vazao {
+      -vazao_minima
+      -vazao_maxima
+    }
+
+    `Reservatório`  <--  Tanque
+    Sensor <|-- `Sensor_Nível`
+    Sensor <|-- Sensor_pH
+    Sensor <|-- Sensor_Turbidez
+    Sensor <|-- Sensor_Vazao
+    ETA *-- Controlador
+    ETA *-- `Reservatório`
+    `Reservatório` "1" *-- "*" Sensor
+    Controlador "1" --> "4" Sensor
+    Controlador "1" --> "2" Bomba
+    Controlador "1" --> "4" Alarme
+    Controlador --> `Histórico`
