@@ -89,6 +89,68 @@ public:
     }
 };
 
+class Bomba
+{
+private:
+    string tag;
+    string area;
+    double vazao_nominal;
+    bool operando;
+
+public:
+    Bomba(string tag_nova, string area_nova, double vazao_nominal_nova)
+        : tag(tag_nova), area(area_nova), vazao_nominal(vazao_nominal_nova), operando(false) {}
+
+    void ligar()
+    {
+        operando = true;
+        cout << "Bomba " << tag << " operando." << endl;
+    }
+
+    void desligar()
+    {
+        operando = false;
+        cout << "Bomba " << tag << " desligada." << endl;
+    }
+
+    double get_vazao_nominal()
+    {
+        if (operando)
+            return vazao_nominal;
+        else
+            return 0.0;
+    }
+};
+
+class Valvula
+{
+private:
+    string tag;
+    string area;
+    bool aberta;
+
+public:
+    Valvula(string tag_nova, string area_nova)
+        : tag(tag_nova), area(area_nova), aberta(false) {}
+
+    void abrir()
+    {
+        aberta = true;
+        cout << "Válvula de alívio " << tag << " aberta." << endl;
+    }
+
+    void fechar()
+    {
+        aberta = false;
+        cout << "Válvula de alívio " << tag << " fechada." << endl;
+    }
+
+    bool esta_aberta()
+    {
+        return aberta;
+    }
+};
+
 // Classe abstrata p/ sensores.
 class Sensor
 {
@@ -189,68 +251,6 @@ public:
              << endl;
 
         return valor_lido;
-    }
-};
-
-class Bomba
-{
-private:
-    string tag;
-    string area;
-    double vazao_nominal;
-    bool operando;
-
-public:
-    Bomba(string tag_nova, string area_nova, double vazao_nominal_nova)
-        : tag(tag_nova), area(area_nova), vazao_nominal(vazao_nominal_nova), operando(false) {}
-
-    void ligar()
-    {
-        operando = true;
-        cout << "Bomba " << tag << " operando." << endl;
-    }
-
-    void desligar()
-    {
-        operando = false;
-        cout << "Bomba " << tag << " desligada." << endl;
-    }
-
-    double get_vazao_nominal()
-    {
-        if (operando)
-            return vazao_nominal;
-        else
-            return 0.0;
-    }
-};
-
-class Valvula
-{
-private:
-    string tag;
-    string area;
-    bool aberta;
-
-public:
-    Valvula(string tag_nova, string area_nova)
-        : tag(tag_nova), area(area_nova), aberta(false) {}
-
-    void abrir()
-    {
-        aberta = true;
-        cout << "Válvula de alívio " << tag << " aberta." << endl;
-    }
-
-    void fechar()
-    {
-        aberta = false;
-        cout << "Válvula de alívio " << tag << " fechada." << endl;
-    }
-
-    bool esta_aberta()
-    {
-        return aberta;
     }
 };
 
