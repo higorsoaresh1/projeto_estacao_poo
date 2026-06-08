@@ -2,6 +2,8 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <cstdlib>
+#include <ctime>
 
 /*Desenvolvido por: Guilherme Parreira e Higor Soares.*/
 
@@ -89,6 +91,68 @@ public:
     }
 };
 
+class Bomba
+{
+private:
+    string tag;
+    string area;
+    double vazao_nominal;
+    bool operando;
+
+public:
+    Bomba(string tag_nova, string area_nova, double vazao_nominal_nova)
+        : tag(tag_nova), area(area_nova), vazao_nominal(vazao_nominal_nova), operando(false) {}
+
+    void ligar()
+    {
+        operando = true;
+        cout << "Bomba " << tag << " operando." << endl;
+    }
+
+    void desligar()
+    {
+        operando = false;
+        cout << "Bomba " << tag << " desligada." << endl;
+    }
+
+    double get_vazao_nominal()
+    {
+        if (operando)
+            return vazao_nominal;
+        else
+            return 0.0;
+    }
+};
+
+class Valvula
+{
+private:
+    string tag;
+    string area;
+    bool aberta;
+
+public:
+    Valvula(string tag_nova, string area_nova)
+        : tag(tag_nova), area(area_nova), aberta(false) {}
+
+    void abrir()
+    {
+        aberta = true;
+        cout << "Válvula de alívio " << tag << " aberta." << endl;
+    }
+
+    void fechar()
+    {
+        aberta = false;
+        cout << "Válvula de alívio " << tag << " fechada." << endl;
+    }
+
+    bool esta_aberta()
+    {
+        return aberta;
+    }
+};
+
 // Classe abstrata p/ sensores.
 class Sensor
 {
@@ -173,8 +237,7 @@ private:
     Bomba *bomba;
 
 public:
-    sensor_vazao(
-        string tag_nova, string area_nova, double valor_minimo_novo, double valor_maximo_novo, Bomba *bomba_nova)
+    sensor_vazao(string tag_nova, string area_nova, double valor_minimo_novo, double valor_maximo_novo, Bomba *bomba_nova)
         : Sensor(tag_nova, area_nova, 0.0, valor_minimo_novo, valor_maximo_novo), bomba(bomba_nova) {}
 
     double ler_valor() override
@@ -189,68 +252,6 @@ public:
              << endl;
 
         return valor_lido;
-    }
-};
-
-class Bomba
-{
-private:
-    string tag;
-    string area;
-    double vazao_nominal;
-    bool operando;
-
-public:
-    Bomba(string tag_nova, string area_nova, double vazao_nominal_nova)
-        : tag(tag_nova), area(area_nova), vazao_nominal(vazao_nominal_nova), operando(false) {}
-
-    void ligar()
-    {
-        operando = true;
-        cout << "Bomba " << tag << " operando." << endl;
-    }
-
-    void desligar()
-    {
-        operando = false;
-        cout << "Bomba " << tag << " desligada." << endl;
-    }
-
-    double get_vazao_nominal()
-    {
-        if (operando)
-            return vazao_nominal;
-        else
-            return 0.0;
-    }
-};
-
-class Valvula
-{
-private:
-    string tag;
-    string area;
-    bool aberta;
-
-public:
-    Valvula(string tag_nova, string area_nova)
-        : tag(tag_nova), area(area_nova), aberta(false) {}
-
-    void abrir()
-    {
-        aberta = true;
-        cout << "Válvula de alívio " << tag << " aberta." << endl;
-    }
-
-    void fechar()
-    {
-        aberta = false;
-        cout << "Válvula de alívio " << tag << " fechada." << endl;
-    }
-
-    bool esta_aberta()
-    {
-        return aberta;
     }
 };
 
@@ -370,12 +371,28 @@ public:
         b->desligar();
     }
 
-    void acessar_historico()
+    void controlar_nivel(sensor_nivel *sensor, Reservatorio *reservatorio, Bomba *bomba, Valvula *valvula)
     {
+        double setpoint = 700;
+        double tolerancia = 20;
+        double nivel = sensor->ler_valor();
+
+        // Controle principal
+        if (nivel < setpoint - tolerancia)
+        {
+            bomba->ligar();
+        }
+
+        if (nivel > setpoint + tolerancia)
+        {
+            bomba->desligar();
+        }
+
+        reservatorio->encher_reservatorio(bomba->get_vazao_nominal());
     }
 
-    void monitorar(sensor_ph *sensor_ph, sensor_nivel *sensor_nivel, sensor_turbidez *sensor_turbidez,
-                   sensor_vazao *sensor_vazao, alarme_ph *alarme_ph, alarme_nivel_alto *alarme_nivel_alto, alarme_vazao *alarme_vazao, alarme_turbidez *alarme_turbidez)
+    void monitorar(sensor_ph *sensor_ph, sensor_nivel *sensor_nivel, sensor_turbidez *sensor_turbidez, sensor_vazao *sensor_vazao,
+                   alarme_ph *alarme_ph, alarme_nivel_alto *alarme_nivel_alto, alarme_vazao *alarme_vazao, alarme_turbidez *alarme_turbidez)
     {
         double ph = sensor_ph->ler_valor();
         double nivel = sensor_nivel->ler_valor();
@@ -386,15 +403,13 @@ public:
         if (ph > sensor_ph->get_valor_maximo())
         {
             cout << "pH alto detectado! \n"
-                 << "pH Lido: " << ph
-                 << endl;
+                 << "pH Lido: " << ph << endl;
             alarme_ph->disparar(); // Melhorar sistema de alarme.
         }
         else if (ph < sensor_ph->get_valor_minimo())
         {
             cout << "pH baixo detectado! \n"
-                 << "pH Lido: " << ph
-                 << endl;
+                 << "pH Lido: " << ph << endl;
             alarme_ph->disparar(); // Melhorar sistema de alarme.
         }
 
@@ -402,15 +417,13 @@ public:
         if (nivel > sensor_nivel->get_valor_maximo())
         {
             cout << "Nível alto detectado! \n"
-                 << "Nível Lido: " << nivel
-                 << endl;
+                 << "Nível Lido: " << nivel << endl;
             alarme_nivel_alto->disparar(); // Melhorar sistema de alarme.
         }
         else if (nivel < sensor_nivel->get_valor_minimo())
         {
             cout << "Nível baixo detectado! \n"
-                 << "Nível Lido: " << nivel
-                 << endl;
+                 << "Nível Lido: " << nivel << endl;
             alarme_nivel_alto->disparar(); // Melhorar sistema de alarme.
         }
 
@@ -418,15 +431,13 @@ public:
         if (vazao > sensor_vazao->get_valor_maximo())
         {
             cout << "Vazão alta detectada! \n"
-                 << "Vazão Lida: " << vazao
-                 << endl;
+                 << "Vazão Lida: " << vazao << endl;
             alarme_vazao->disparar(); // Melhorar sistema de alarme.
         }
         else if (vazao < sensor_vazao->get_valor_minimo())
         {
             cout << "Vazão baixa detectada! \n"
-                 << "Vazão Lida: " << vazao
-                 << endl;
+                 << "Vazão Lida: " << vazao << endl;
             alarme_vazao->disparar(); // Melhorar sistema de alarme.
         }
 
@@ -434,15 +445,13 @@ public:
         if (turbidez > sensor_turbidez->get_valor_maximo())
         {
             cout << "Turbidez alta detectada! \n"
-                 << "Turbidez Lida: " << turbidez
-                 << endl;
+                 << "Turbidez Lida: " << turbidez << endl;
             alarme_turbidez->disparar(); // Melhorar sistema de alarme.
         }
         else if (turbidez < sensor_turbidez->get_valor_minimo())
         {
             cout << "Turbidez baixa detectada! \n"
-                 << "Turbidez Lida: " << turbidez
-                 << endl;
+                 << "Turbidez Lida: " << turbidez << endl;
             alarme_turbidez->disparar(); // Melhorar sistema de alarme.
         }
     }
@@ -450,12 +459,58 @@ public:
 
 int main()
 {
-    Reservatorio reservatorio("TK-101", "Área 1", 100.0, 30.0, 5.0);
-    Bomba bomba("P-101", "Área 1", 10.0);
+    srand(time(nullptr));
+
+    double volume_inicial = rand() % 1000;
+
+    Reservatorio reservatorio("TK-101", "Área 1", 1000.0, volume_inicial, 5.0);
+
+    Bomba bomba("P-101", "Área 1", 20.0);
+
     Valvula valvula("XV-101", "Área 1");
 
-    sensor_nivel sensorNivel("LT-101", "Área 1", 0.0, 0.0, 100.0, &reservatorio);
-    sensor_vazao sensorVazao("FT-101", "Área 1", 0.0, 20.0, &bomba);
-    sensor_turbidez turbidez_sensor("TB-001", "Área 1", 0.5, 0.0, 1.0);
-    sensor_ph ph_sensor("PH-001", "Área 1", 7.0, 6.0, 8.0);
+    sensor_nivel sensorNivel("LT-101", "Área 1", 0.0, 0.0, 1000.0, &reservatorio);
+    sensor_vazao sensorVazao("FT-101", "Área 1", 0.0, 0.0, &bomba);
+    sensor_ph sensorPH("PH-101", "Área 1", 7.0, 6.0, 8.0);
+    sensor_turbidez sensorTurbidez("TB-101", "Área 1", 0.5, 0.0, 1.0);
+
+    alarme_ph alarmePH("AH-PH", "Área 1");
+    alarme_nivel_alto alarmeNivel("AH-NV", "Área 1");
+    alarme_vazao alarmeVazao("AH-VZ", "Área 1");
+    alarme_turbidez alarmeTurbidez("AH-TB", "Área 1");
+
+    Controlador controlador("CTRL-101");
+
+    int ciclo = 0;
+
+    while (ciclo < 100)
+    {
+        ciclo++;
+
+        cout << "\n===== CICLO " << ciclo << " =====\n";
+
+        // Controle em malha fechada do nível
+        controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula);
+
+        // Consumo normal do processo
+        reservatorio.esvaziar_reservatorio(10);
+
+        // Perturbação após alguns ciclos
+        if (ciclo > 30)
+        {
+            double perturbacao = rand() % 11;
+
+            cout << "Perturbacao de consumo: " << perturbacao << " m³\n";
+
+            reservatorio.esvaziar_reservatorio(perturbacao);
+        }
+
+        // Monitoramento dos sensores e alarmes
+        controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazao,
+                              &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez);
+
+        cout << "Volume atual: " << reservatorio.get_volume_atual() << " m³\n";
+    }
+
+    return 0;
 }
