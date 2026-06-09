@@ -20,3 +20,7 @@ Preencha uma linha por interacao relevante com IA.
 ->rejeitado: Transformação da classe de sensor de vazão em uma estrutura mais complexa;
 ->justificativa: Aprimorar o funcionamento do código, buscar maior fidelidade a um sistema real e evitar sistemas complexos que sejam desconexos com a integridade do projeto.
 
+- 07/06/2026: Continuação da construção do sistema de malha fechada referente ao nível do reservatório
+->aceito: Auxilio na sintaxe do código e possíveis incrementos na organização da classes reservátorio, bomba e valvula;
+->rejeitado: Modificações desnecessárias em classes de vazão e na retroalimentação da malha de nível;
+->justificativa: Buscar o maior desempenho do código, juntamente com um funcionamento verosímil à realidade, mas evitando implementações não essenciais.
