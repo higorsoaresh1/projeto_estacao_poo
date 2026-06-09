@@ -54,11 +54,11 @@ public:
         if (volume_atual + volume <= volume_maximo)
         {
             volume_atual += volume;
-            cout << "Reservatório " << tag << " enchido. Volume atual: " << volume_atual << " m³." << endl;
+            cout << "Reservatorio " << tag << " enchido. Volume atual: " << volume_atual << " m³." << endl;
         }
         else
         {
-            cout << "Não é possível encher o reservatório " << tag << ". Volume excede o máximo." << endl;
+            cout << "Não é possível encher o reservatorio " << tag << ". Volume excede o maximo." << endl;
         }
     }
 
@@ -67,11 +67,11 @@ public:
         if (volume_atual - volume >= 0)
         {
             volume_atual -= volume;
-            cout << "Reservatório " << tag << " esvaziado. Volume atual: " << volume_atual << " m³." << endl;
+            cout << "Reservatorio " << tag << " esvaziado. Volume atual: " << volume_atual << " m³." << endl;
         }
         else
         {
-            cout << "Não é possível esvaziar o reservatório " << tag << ". Volume insuficiente." << endl;
+            cout << "Não é possível esvaziar o reservatorio " << tag << ". Volume insuficiente." << endl;
         }
     }
 
@@ -129,27 +129,36 @@ class Valvula
 private:
     string tag;
     string area;
+    double vazao_alivio;
     bool aberta;
 
 public:
-    Valvula(string tag_nova, string area_nova)
-        : tag(tag_nova), area(area_nova), aberta(false) {}
+    Valvula(string tag_nova, string area_nova, double vazao_alivio_nova)
+        : tag(tag_nova), area(area_nova), vazao_alivio(vazao_alivio_nova), aberta(false) {}
 
     void abrir()
     {
         aberta = true;
-        cout << "Válvula de alívio " << tag << " aberta." << endl;
+        cout << "Valvula de alivio " << tag << " aberta." << endl;
     }
 
     void fechar()
     {
         aberta = false;
-        cout << "Válvula de alívio " << tag << " fechada." << endl;
+        cout << "VValvula de alivio " << tag << " fechada." << endl;
     }
 
     bool esta_aberta()
     {
         return aberta;
+    }
+
+    double get_vazao_alivio()
+    {
+        if (aberta)
+            return vazao_alivio;
+        else
+            return 0.0;
     }
 };
 
@@ -169,7 +178,7 @@ public:
 
     virtual double ler_valor()
     {
-        cout << "Lendo valor do sensor " << tag << " na área " << area << "." << endl;
+        cout << "Lendo valor do sensor " << tag << " na area " << area << "." << endl;
 
         return valor_lido;
     }
@@ -194,7 +203,7 @@ public:
 
     double ler_valor() override
     {
-        cout << "Lendo valor do sensor de pH " << tag << " na área " << area << "." << endl;
+        cout << "Lendo valor do sensor de pH " << tag << " na area " << area << "." << endl;
 
         return valor_lido;
     }
@@ -207,7 +216,7 @@ public:
 
     double ler_valor() override
     {
-        cout << "Lendo valor do sensor de turbidez " << tag << " na área " << area << "." << endl;
+        cout << "Lendo valor do sensor de turbidez " << tag << " na area " << area << "." << endl;
 
         return valor_lido;
     }
@@ -225,7 +234,7 @@ public:
     double ler_valor() override
     {
         valor_lido = reservatorio->get_volume_atual();
-        cout << "Lendo valor do sensor de nível " << tag << " na área " << area << "." << endl;
+        cout << "Lendo valor do sensor de nivel " << tag << " na area " << area << "." << endl;
 
         return valor_lido;
     }
@@ -244,9 +253,9 @@ public:
     {
         valor_lido = bomba->get_vazao_nominal();
 
-        cout << "Lendo sensor de vazão "
+        cout << "Lendo sensor de vazao "
              << tag
-             << ". Vazão = "
+             << ". Vazao = "
              << valor_lido
              << " m³/ciclo"
              << endl;
@@ -307,13 +316,13 @@ public:
     void disparar() override
     {
         ativo = true;
-        cout << "Alarme de nível alto " << tag << " ativado." << endl;
+        cout << "Alarme de nivel alto " << tag << " ativado." << endl;
     }
 
     void silenciar() override
     {
         ativo = false;
-        cout << "Alarme de nível alto " << tag << " desativado." << endl;
+        cout << "Alarme de nivel alto " << tag << " desativado." << endl;
     }
 };
 
@@ -325,13 +334,13 @@ public:
     void disparar() override
     {
         ativo = true;
-        cout << "Alarme de vazão " << tag << " ativado." << endl;
+        cout << "Alarme de vazao " << tag << " ativado." << endl;
     }
 
     void silenciar() override
     {
         ativo = false;
-        cout << "Alarme de vazão " << tag << " desativado." << endl;
+        cout << "Alarme de vazao " << tag << " desativado." << endl;
     }
 };
 
@@ -365,16 +374,10 @@ private:
 public:
     Controlador(string tag_nova) : tag(tag_nova) {}
 
-    void monitorar_bomba(Bomba *b)
-    {
-        b->ligar();
-        b->desligar();
-    }
-
     void controlar_nivel(sensor_nivel *sensor, Reservatorio *reservatorio, Bomba *bomba, Valvula *valvula)
     {
         double setpoint = 700;
-        double tolerancia = 20;
+        double tolerancia = 80;
         double nivel = sensor->ler_valor();
 
         // Controle principal
@@ -382,13 +385,25 @@ public:
         {
             bomba->ligar();
         }
-
-        if (nivel > setpoint + tolerancia)
+        else if (nivel > setpoint + tolerancia)
         {
             bomba->desligar();
         }
 
+        if (nivel > 950)
+        {
+            valvula->abrir();
+        }
+        else if (nivel < 900)
+        {
+            valvula->fechar();
+        }
+
+        /*Essas funções são chamadas para atualizar o volume do reservatório, e não precisa necessariamente,
+        estarem reservados aos if, pois o que fiz se o volume esta sendo modificado é a variável bool ativo e bool operando
+        da bomba e da válvula presentes nos get.*/
         reservatorio->encher_reservatorio(bomba->get_vazao_nominal());
+        reservatorio->esvaziar_reservatorio(valvula->get_vazao_alivio());
     }
 
     void monitorar(sensor_ph *sensor_ph, sensor_nivel *sensor_nivel, sensor_turbidez *sensor_turbidez, sensor_vazao *sensor_vazao,
@@ -412,33 +427,45 @@ public:
                  << "pH Lido: " << ph << endl;
             alarme_ph->disparar(); // Melhorar sistema de alarme.
         }
+        else
+        {
+            alarme_ph->silenciar();
+        }
 
         // Monitoramento sensor de nível.
         if (nivel > sensor_nivel->get_valor_maximo())
         {
-            cout << "Nível alto detectado! \n"
-                 << "Nível Lido: " << nivel << endl;
+            cout << "Nivel alto detectado! \n"
+                 << "Nivel Lido: " << nivel << endl;
             alarme_nivel_alto->disparar(); // Melhorar sistema de alarme.
         }
         else if (nivel < sensor_nivel->get_valor_minimo())
         {
-            cout << "Nível baixo detectado! \n"
-                 << "Nível Lido: " << nivel << endl;
+            cout << "Nivel baixo detectado! \n"
+                 << "Nivel Lido: " << nivel << endl;
             alarme_nivel_alto->disparar(); // Melhorar sistema de alarme.
+        }
+        else
+        {
+            alarme_nivel_alto->silenciar();
         }
 
         // Monitoramento sensor de vazão.
         if (vazao > sensor_vazao->get_valor_maximo())
         {
-            cout << "Vazão alta detectada! \n"
-                 << "Vazão Lida: " << vazao << endl;
+            cout << "Vazao alta detectada! \n"
+                 << "Vazao Lida: " << vazao << endl;
             alarme_vazao->disparar(); // Melhorar sistema de alarme.
         }
         else if (vazao < sensor_vazao->get_valor_minimo())
         {
-            cout << "Vazão baixa detectada! \n"
-                 << "Vazão Lida: " << vazao << endl;
+            cout << "Vazao baixa detectada! \n"
+                 << "Vazao Lida: " << vazao << endl;
             alarme_vazao->disparar(); // Melhorar sistema de alarme.
+        }
+        else
+        {
+            alarme_vazao->silenciar();
         }
 
         // Monitoramento sensor de turbidez.
@@ -454,6 +481,10 @@ public:
                  << "Turbidez Lida: " << turbidez << endl;
             alarme_turbidez->disparar(); // Melhorar sistema de alarme.
         }
+        else
+        {
+            alarme_turbidez->silenciar();
+        }
     }
 };
 
@@ -461,27 +492,30 @@ int main()
 {
     srand(time(nullptr));
 
+    // Gera o volume inicial do reservatório de forma aleatória entre 0 e 1000 m³ para simular diferentes condições iniciais.
     double volume_inicial = rand() % 1000;
+    Reservatorio reservatorio("TK-101", "Area 1", 1000.0, volume_inicial, 5.0);
 
-    Reservatorio reservatorio("TK-101", "Área 1", 1000.0, volume_inicial, 5.0);
+    Bomba bomba("P-101", "Area 1", 20.0);
 
-    Bomba bomba("P-101", "Área 1", 20.0);
+    Valvula valvula("XV-101", "Area 1", 15.0);
 
-    Valvula valvula("XV-101", "Área 1");
+    sensor_nivel sensorNivel("LT-101", "Area 1", 0.0, 0.0, 1000.0, &reservatorio);
+    sensor_vazao sensorVazao("FT-101", "Area 1", 0.0, 25.0, &bomba);
+    sensor_ph sensorPH("PH-101", "Area 1", 7.0, 6.0, 8.0);
+    sensor_turbidez sensorTurbidez("TB-101", "Area 1", 0.5, 0.0, 1.0);
 
-    sensor_nivel sensorNivel("LT-101", "Área 1", 0.0, 0.0, 1000.0, &reservatorio);
-    sensor_vazao sensorVazao("FT-101", "Área 1", 0.0, 0.0, &bomba);
-    sensor_ph sensorPH("PH-101", "Área 1", 7.0, 6.0, 8.0);
-    sensor_turbidez sensorTurbidez("TB-101", "Área 1", 0.5, 0.0, 1.0);
-
-    alarme_ph alarmePH("AH-PH", "Área 1");
-    alarme_nivel_alto alarmeNivel("AH-NV", "Área 1");
-    alarme_vazao alarmeVazao("AH-VZ", "Área 1");
-    alarme_turbidez alarmeTurbidez("AH-TB", "Área 1");
+    alarme_ph alarmePH("AH-PH", "Area 1");
+    alarme_nivel_alto alarmeNivel("AH-NV", "Area 1");
+    alarme_vazao alarmeVazao("AH-VZ", "Area 1");
+    alarme_turbidez alarmeTurbidez("AH-TB", "Area 1");
 
     Controlador controlador("CTRL-101");
 
+    double consumo_atual = 5 + rand() % 11; // entre 5 e 15 m³/ciclo
+
     int ciclo = 0;
+    int ciclos_estavel = 0;
 
     while (ciclo < 100)
     {
@@ -489,27 +523,41 @@ int main()
 
         cout << "\n===== CICLO " << ciclo << " =====\n";
 
-        // Controle em malha fechada do nível
+        // Controle em malha fechada
         controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula);
 
-        // Consumo normal do processo
-        reservatorio.esvaziar_reservatorio(10);
+        // Consumo do processo
+        reservatorio.esvaziar_reservatorio(consumo_atual);
 
-        // Perturbação após alguns ciclos
-        if (ciclo > 30)
+        // Verifica se está próximo do setpoint
+        double nivel = sensorNivel.ler_valor();
+
+        if (abs(nivel - 700) <= 20)
         {
-            double perturbacao = rand() % 11;
-
-            cout << "Perturbacao de consumo: " << perturbacao << " m³\n";
-
-            reservatorio.esvaziar_reservatorio(perturbacao);
+            ciclos_estavel++;
+        }
+        else
+        {
+            ciclos_estavel = 0;
         }
 
-        // Monitoramento dos sensores e alarmes
-        controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazao,
-                              &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez);
+        // Após 5 ciclos estáveis, gera nova perturbação
+        if (ciclos_estavel >= 5)
+        {
+            consumo_atual = 5 + rand() % 21; // entre 5 e 25
+
+            cout << "\n*** PERTURBACAO GERADA ***\n";
+            cout << "Novo consumo: " << consumo_atual << " m³/ciclo\n";
+
+            ciclos_estavel = 0;
+        }
+
+        // Monitoramento
+        controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazao, &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez);
 
         cout << "Volume atual: " << reservatorio.get_volume_atual() << " m³\n";
+
+        cout << "Consumo atual: " << consumo_atual << " m³/ciclo\n";
     }
 
     return 0;
