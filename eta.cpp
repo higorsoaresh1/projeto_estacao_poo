@@ -145,7 +145,7 @@ public:
     void fechar()
     {
         aberta = false;
-        cout << "VValvula de alivio " << tag << " fechada." << endl;
+        cout << "Valvula de alivio " << tag << " fechada." << endl;
     }
 
     bool esta_aberta()
@@ -178,7 +178,7 @@ public:
 
     virtual double ler_valor()
     {
-        cout << "Lendo valor do sensor " << tag << " na area " << area << "." << endl;
+        cout << "Lendo valor do sensor " << tag << " na area: " << area << "." << endl;
 
         return valor_lido;
     }
@@ -203,7 +203,7 @@ public:
 
     double ler_valor() override
     {
-        cout << "Lendo valor do sensor de pH " << tag << " na area " << area << "." << endl;
+        cout << "Lendo valor do sensor de pH " << tag << " na area: " << area << "." << endl;
 
         return valor_lido;
     }
@@ -216,7 +216,7 @@ public:
 
     double ler_valor() override
     {
-        cout << "Lendo valor do sensor de turbidez " << tag << " na area " << area << "." << endl;
+        cout << "Lendo valor do sensor de turbidez " << tag << " na area: " << area << "." << endl;
 
         return valor_lido;
     }
@@ -234,7 +234,7 @@ public:
     double ler_valor() override
     {
         valor_lido = reservatorio->get_volume_atual();
-        cout << "Lendo valor do sensor de nivel " << tag << " na area " << area << "." << endl;
+        cout << "Lendo valor do sensor de nivel " << tag << " na area: " << area << "." << endl;
 
         return valor_lido;
     }
@@ -255,9 +255,9 @@ public:
 
         cout << "Lendo sensor de vazao "
              << tag
-             << ". Vazao = "
+             << ".\nVazao bomba = "
              << valor_lido
-             << " m³/ciclo"
+             << " m3/ciclo"
              << endl;
 
         return valor_lido;
@@ -547,7 +547,7 @@ int main()
             consumo_atual = 5 + rand() % 21; // entre 5 e 25
 
             cout << "\n*** PERTURBACAO GERADA ***\n";
-            cout << "Novo consumo: " << consumo_atual << " m³/ciclo\n";
+            cout << "Novo consumo: " << consumo_atual << " m3/ciclo\n";
 
             ciclos_estavel = 0;
         }
@@ -555,9 +555,9 @@ int main()
         // Monitoramento
         controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazao, &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez);
 
-        cout << "Volume atual: " << reservatorio.get_volume_atual() << " m³\n";
+        cout << "Volume atual: " << reservatorio.get_volume_atual() << " m3\n";
 
-        cout << "Consumo atual: " << consumo_atual << " m³/ciclo\n";
+        cout << "Consumo atual: " << consumo_atual << " m3/ciclo\n";
     }
 
     return 0;
