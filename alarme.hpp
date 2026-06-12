@@ -29,6 +29,11 @@ public:
         cout << "Alarme " << tag << " desativado." << endl;
     }
 
+    bool esta_ativo()
+    {
+        return ativo;
+    }
+
     virtual ~Alarme() = default;
 };
 
