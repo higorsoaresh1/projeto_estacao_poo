@@ -37,6 +37,11 @@ public:
         else
             return 0.0;
     }
+
+    bool esta_operando()
+    {
+        return operando;
+    }
 };
 
 #endif
