@@ -6,7 +6,6 @@
 
 #include "ALARME.hpp"
 #include "BOMBA.hpp"
-#include "HISTORICO.hpp"
 #include "RESERVATORIO.hpp"
 #include "SENSOR.hpp"
 #include "VALVULA.hpp"

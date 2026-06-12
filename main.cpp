@@ -9,6 +9,7 @@
 /*Desenvolvido por: Guilherme Parreira e Higor Soares.*/
 
 #include "CONTROLADOR.hpp"
+#include "HISTORICO.hpp"
 
 using namespace std;
 
@@ -35,6 +36,7 @@ int main()
      alarme_turbidez alarmeTurbidez("AH-TB", "Area 1");
 
      Controlador controlador("CTRL-101");
+     Historico historico("historico_eta.db");
 
      double consumo_atual = 5 + rand() % 11; // entre 5 e 15 m³/ciclo
 
@@ -87,6 +89,9 @@ int main()
 
           // Monitoramento
           controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazao, &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez);
+
+          historico.registrar(ciclo, sensorNivel.ler_valor(), sensorVazao.ler_valor(), sensorPH.ler_valor(), sensorTurbidez.ler_valor(), consumo_atual,
+                              bomba.esta_operando(), valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(), alarmeTurbidez.esta_ativo());
 
           // Escrita no JSON
           json << "{";
