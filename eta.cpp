@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdlib>
 #include <ctime>
+#include <cmath> 
 
 /*Desenvolvido por: Guilherme Parreira e Higor Soares.*/
 
