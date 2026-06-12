@@ -94,6 +94,8 @@ int main()
                               bomba.esta_operando(), valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(), alarmeTurbidez.esta_ativo());
 
           // Escrita no JSON
+          /*Criação da lógica da escrita do JSON LINHA, pois o padrão JSON não permite trabalhar em
+          loop infinito, pois nunca fecha a lógica []. O JSON Linha foi criado justamente para cobrir essa parte.*/
           json << "{";
 
           json << "\"ciclo\":" << ciclo << ",";

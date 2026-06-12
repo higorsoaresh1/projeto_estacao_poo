@@ -8,9 +8,8 @@
 
 using namespace std;
 
-// Classe abstrata p/ sensores.
 class Sensor
-{
+{ /*Classe abstrata para representar sensores no sistema de ETA*/
 protected:
     string tag;
     string area;
@@ -43,7 +42,7 @@ public:
 };
 
 class sensor_ph : public Sensor
-{
+{ /*Classe para representar sensor de pH*/
 public:
     using Sensor::Sensor;
 
@@ -56,7 +55,7 @@ public:
 };
 
 class sensor_turbidez : public Sensor
-{
+{ /*Classe para representar sensor de turbidez*/
 public:
     using Sensor::Sensor;
 
@@ -69,7 +68,7 @@ public:
 };
 
 class sensor_nivel : public Sensor
-{
+{ /*Classe para representar sensor de nível*/
 private:
     Reservatorio *reservatorio;
 
@@ -78,7 +77,7 @@ public:
         : Sensor(tag_nova, area_nova, valor_lido_novo, valor_minimo_novo, valor_maximo_novo), reservatorio(reservatorio_novo) {}
 
     double ler_valor() override
-    {
+    { /*Lê o valor do sensor de nível*/
         valor_lido = reservatorio->get_volume_atual();
         cout << "Lendo valor do sensor de nivel " << tag << " na area: " << area << "." << endl;
 
@@ -87,7 +86,7 @@ public:
 };
 
 class sensor_vazao : public Sensor
-{
+{ /*Classe para representar sensor de vazão*/
 private:
     Bomba *bomba;
 
@@ -96,15 +95,10 @@ public:
         : Sensor(tag_nova, area_nova, 0.0, valor_minimo_novo, valor_maximo_novo), bomba(bomba_nova) {}
 
     double ler_valor() override
-    {
+    { /*Verifica a vazão da bomba*/
         valor_lido = bomba->get_vazao_nominal();
 
-        cout << "Lendo sensor de vazao "
-             << tag
-             << ".\nVazao bomba = "
-             << valor_lido
-             << " m3/ciclo"
-             << endl;
+        cout << "Lendo sensor de vazao " << tag << ".\nVazao bomba = " << valor_lido << " m3/ciclo" << endl;
 
         return valor_lido;
     }

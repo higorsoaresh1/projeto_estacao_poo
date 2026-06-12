@@ -13,7 +13,7 @@
 using namespace std;
 
 class Controlador
-{
+{ /*Classe para representar o controlador no sistema de ETA*/
 private:
     string tag;
 
@@ -28,7 +28,7 @@ public:
 
         // Controle principal
         if (nivel < setpoint - tolerancia)
-        {
+        { /*Verifica se o nível está abaixo do setpoint menos a tolerância*/
             bomba->ligar();
         }
         else if (nivel > setpoint + tolerancia)
@@ -54,7 +54,7 @@ public:
 
     void monitorar(sensor_ph *sensor_ph, sensor_nivel *sensor_nivel, sensor_turbidez *sensor_turbidez, sensor_vazao *sensor_vazao,
                    alarme_ph *alarme_ph, alarme_nivel_alto *alarme_nivel_alto, alarme_vazao *alarme_vazao, alarme_turbidez *alarme_turbidez)
-    {
+    { /*Método responsável por monitorar os sensores do sistema*/
         double ph = sensor_ph->ler_valor();
         double nivel = sensor_nivel->ler_valor();
         double turbidez = sensor_turbidez->ler_valor();
@@ -65,13 +65,13 @@ public:
         {
             cout << "pH alto detectado! \n"
                  << "pH Lido: " << ph << endl;
-            alarme_ph->disparar(); // Melhorar sistema de alarme.
+            alarme_ph->disparar();
         }
         else if (ph < sensor_ph->get_valor_minimo())
         {
             cout << "pH baixo detectado! \n"
                  << "pH Lido: " << ph << endl;
-            alarme_ph->disparar(); // Melhorar sistema de alarme.
+            alarme_ph->disparar();
         }
         else
         {
@@ -83,13 +83,13 @@ public:
         {
             cout << "Nivel alto detectado! \n"
                  << "Nivel Lido: " << nivel << endl;
-            alarme_nivel_alto->disparar(); // Melhorar sistema de alarme.
+            alarme_nivel_alto->disparar();
         }
         else if (nivel < sensor_nivel->get_valor_minimo())
         {
             cout << "Nivel baixo detectado! \n"
                  << "Nivel Lido: " << nivel << endl;
-            alarme_nivel_alto->disparar(); // Melhorar sistema de alarme.
+            alarme_nivel_alto->disparar();
         }
         else
         {
@@ -101,13 +101,13 @@ public:
         {
             cout << "Vazao alta detectada! \n"
                  << "Vazao Lida: " << vazao << endl;
-            alarme_vazao->disparar(); // Melhorar sistema de alarme.
+            alarme_vazao->disparar();
         }
         else if (vazao < sensor_vazao->get_valor_minimo())
         {
             cout << "Vazao baixa detectada! \n"
                  << "Vazao Lida: " << vazao << endl;
-            alarme_vazao->disparar(); // Melhorar sistema de alarme.
+            alarme_vazao->disparar();
         }
         else
         {
@@ -119,13 +119,13 @@ public:
         {
             cout << "Turbidez alta detectada! \n"
                  << "Turbidez Lida: " << turbidez << endl;
-            alarme_turbidez->disparar(); // Melhorar sistema de alarme.
+            alarme_turbidez->disparar();
         }
         else if (turbidez < sensor_turbidez->get_valor_minimo())
         {
             cout << "Turbidez baixa detectada! \n"
                  << "Turbidez Lida: " << turbidez << endl;
-            alarme_turbidez->disparar(); // Melhorar sistema de alarme.
+            alarme_turbidez->disparar();
         }
         else
         {

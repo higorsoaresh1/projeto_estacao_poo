@@ -7,7 +7,7 @@
 using namespace std;
 
 class Alarme
-{
+{ /*Classe que representa um alarme no sistema de ETA*/
 protected:
     string tag;
     string area;
@@ -29,7 +29,7 @@ public:
         cout << "Alarme " << tag << " desativado." << endl;
     }
 
-    bool esta_ativo()
+    virtual bool esta_ativo()
     {
         return ativo;
     }
@@ -38,7 +38,7 @@ public:
 };
 
 class alarme_ph : public Alarme
-{
+{ /*Classe que representa um alarme de pH no sistema de ETA*/
 public:
     using Alarme::Alarme;
 
@@ -53,10 +53,15 @@ public:
         ativo = false;
         cout << "Alarme de pH " << tag << " desativado." << endl;
     }
+
+    bool esta_ativo() override
+    {
+        return ativo;
+    }
 };
 
 class alarme_nivel_alto : public Alarme
-{
+{ /*Classe que representa um alarme de nível alto no sistema de ETA*/
 public:
     using Alarme::Alarme;
 
@@ -71,10 +76,15 @@ public:
         ativo = false;
         cout << "Alarme de nivel alto " << tag << " desativado." << endl;
     }
+
+    bool esta_ativo() override
+    {
+        return ativo;
+    }
 };
 
 class alarme_vazao : public Alarme
-{
+{ /*Classe que representa um alarme de vazão no sistema de ETA*/
 public:
     using Alarme::Alarme;
 
@@ -89,10 +99,15 @@ public:
         ativo = false;
         cout << "Alarme de vazao " << tag << " desativado." << endl;
     }
+
+    bool esta_ativo() override
+    {
+        return ativo;
+    }
 };
 
 class alarme_turbidez : public Alarme
-{
+{ /*Classe que representa um alarme de turbidez no sistema de ETA*/
 public:
     using Alarme::Alarme;
 
@@ -106,6 +121,11 @@ public:
     {
         ativo = false;
         cout << "Alarme de turbidez " << tag << " desativado." << endl;
+    }
+
+    bool esta_ativo() override
+    {
+        return ativo;
     }
 };
 

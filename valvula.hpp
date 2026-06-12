@@ -7,7 +7,7 @@
 using namespace std;
 
 class Valvula
-{
+{ /*Classe que representa uma válvula no sistema de ETA*/
 private:
     string tag;
     string area;
@@ -36,7 +36,7 @@ public:
     }
 
     double get_vazao_alivio()
-    {
+    { /*Retorna a vazão da válvula se estiver aberta, caso contrário retorna 0.0*/
         if (aberta)
             return vazao_alivio;
         else
