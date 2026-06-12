@@ -7,7 +7,7 @@
 using namespace std;
 
 class ETA
-{
+{ /*Classe para representar uma Estação de Tratamento de Água.*/
 private:
     string localizacao;
     bool operando;
@@ -25,6 +25,11 @@ public:
     {
         operando = false;
         cout << "ETA parada." << endl;
+    }
+
+    bool esta_operando()
+    {
+        return operando;
     }
 };
 
