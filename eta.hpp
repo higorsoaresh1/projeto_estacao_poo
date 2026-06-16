@@ -17,14 +17,20 @@ public:
 
     void iniciar_tratamento()
     {
-        operando = true;
-        cout << "ETA iniciada." << endl;
+        if (!operando)
+        {
+            operando = true;
+            cout << "ETA iniciada." << endl;
+        }
     }
 
     void parar_tratamento()
     {
-        operando = false;
-        cout << "ETA parada." << endl;
+        if (operando)
+        {
+            operando = false;
+            cout << "ETA parada." << endl;
+        }
     }
 
     bool esta_operando()
