@@ -7,7 +7,7 @@
 using namespace std;
 
 class Bomba
-{
+{ /*Classe que representa uma bomba no sistema de ETA*/
 private:
     string tag;
     string area;
@@ -31,7 +31,7 @@ public:
     }
 
     double get_vazao_nominal()
-    {
+    { /*Retorna a vazão nominal da bomba se ela estiver operando, caso contrário retorna 0.0*/
         if (operando)
             return vazao_nominal;
         else

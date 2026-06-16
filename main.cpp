@@ -5,20 +5,32 @@
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
+#include <thread>
+#include <chrono>
 
 /*Desenvolvido por: Guilherme Parreira e Higor Soares.*/
 
 #include "CONTROLADOR.hpp"
 #include "HISTORICO.hpp"
+#include "ETA.hpp"
 
 using namespace std;
 
 int main()
 {
+     remove("historico_eta.db");
+     remove("historico_eta.db-wal");
+     remove("historico_eta.db-shm");
+
+     remove("dados_eta.jsonl");
+     remove("comando.txt");
+
      srand(time(nullptr));
 
      // Gera o volume inicial do reservatório de forma aleatória entre 0 e 1000 m³ para simular diferentes condições iniciais.
      double volume_inicial = rand() % 1000;
+     ETA eta("Area 1");
+
      Reservatorio reservatorio("TK-101", "Area 1", 1000.0, volume_inicial, 5.0);
 
      Bomba bomba("P-101", "Area 1", 20.0);
@@ -52,8 +64,56 @@ int main()
           return 1;
      }
 
-     while (ciclo < 100)
+     eta.iniciar_tratamento();
+
+     while (true)
      {
+          ifstream arquivo_comando("comando.txt");
+
+          string comando;
+
+          if (arquivo_comando.is_open())
+          {
+               getline(arquivo_comando, comando);
+               arquivo_comando.close();
+
+               if (comando == "STOP")
+               {
+                    eta.parar_tratamento();
+
+                    ofstream limpar("comando.txt");
+                    limpar << "";
+                    limpar.close();
+               }
+               else if (comando == "START")
+               {
+                    eta.iniciar_tratamento();
+
+                    ofstream limpar("comando.txt");
+                    limpar << "";
+                    limpar.close();
+               }
+               else if (comando == "EXIT")
+               {
+                    cout << "Encerrando sistema..." << endl;
+
+                    ofstream limpar("comando.txt");
+                    limpar << "";
+                    limpar.close();
+
+                    break;
+               }
+          }
+
+          if (!eta.esta_operando())
+          {
+               cout << "ETA parada pelo supervisório.\n";
+
+               this_thread::sleep_for(chrono::seconds(1));
+
+               continue;
+          }
+
           ciclo++;
 
           cout << "\n===== CICLO " << ciclo << " =====\n";
@@ -94,6 +154,8 @@ int main()
                               bomba.esta_operando(), valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(), alarmeTurbidez.esta_ativo());
 
           // Escrita no JSON
+          /*Criação da lógica da escrita do JSON LINHA, pois o padrão JSON não permite trabalhar em
+          loop infinito, pois nunca fecha a lógica []. O JSON Linha foi criado justamente para cobrir essa parte.*/
           json << "{";
 
           json << "\"ciclo\":" << ciclo << ",";
@@ -134,11 +196,15 @@ int main()
 
           json.flush();
 
+          this_thread::sleep_for(chrono::seconds(1));
+
           cout << "Volume atual: " << reservatorio.get_volume_atual() << " m3\n";
 
           cout << "Consumo atual: " << consumo_atual << " m3/ciclo\n";
      }
      json.close();
+
+     cout << "Sistema encerrado com sucesso." << endl;
 
      return 0;
 }
