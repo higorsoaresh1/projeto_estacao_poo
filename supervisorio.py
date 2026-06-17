@@ -50,6 +50,25 @@ sensores = dados["sensores"]
 atuadores = dados["atuadores"]
 alarmes = dados["alarmes"]
 
+st.header("Dados de Controle")
+
+col1, col2 = st.columns(2)
+
+col1.metric("Setpoint Nível", f"{dados['setpoint']:.1f} m³")
+col2.metric("Toleância", f"{dados['tolerancia']:.1f} m³")
+
+novo_setpoint = st.number_input("Novo Setpoint", min_value=0.0, max_value=1000.0, value=float(dados["setpoint"]), step=10.0)
+
+if st.button("DEFINIR SETPOINT"):
+    with open("comando.txt", "w") as f:
+        f.write(f"SETPOINT={novo_setpoint}")
+
+nova_tolerancia = st.number_input("Nova Tolerância", min_value=1.0, max_value=500.0, value=float(dados["tolerancia"]), step=5.0)
+
+if st.button("DEFINIR TOLERÂNCIA"):
+    with open("comando.txt", "w") as f:
+        f.write(f"TOLERANCIA={nova_tolerancia}")
+
 st.header("Sensores")
 
 col1, col2, col3, col4, col5 = st.columns(5)
