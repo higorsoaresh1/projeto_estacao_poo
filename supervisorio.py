@@ -9,7 +9,7 @@ st_autorefresh(interval=1000, key="eta_refresh")
 
 st.set_page_config(
     page_title="Supervisório ETA",
-    layout="centered"
+    layout="wide"
 )
 
 st.title("🏭 Supervisório ETA")
