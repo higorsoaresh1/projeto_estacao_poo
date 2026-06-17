@@ -4,3 +4,9 @@
 31/05/2026 - Continuação do código em c++ (discord compartilhado);
 06/06/2026 - Continuação do código em c++, aprimorando as classes e atributos já construidos e iniciando a formação de um sistema de malha fechada.(Discord compartilhado- 3 horas seguidas);
 07/06/2026 - Continuação do código em c++( Continuação da implementação da malha fechada dentro do sistema de nível do reservatório, junto ao inicio da formação desse processo na main do programa) - (Discord compartilhado, cerca de 1 hora e 40);
+08/06/2026 - Seperação das classes e da main em arquivos distintos para possibilitar uma melhor organização do código. Além disso, também foi iniciada a construção do JSON dentro da Main - (Discord compartilhado, cerca de 2horas);
+10/06/2026 - Finalização da construção do JSON dentro da Main, junto com a adaptação desse para uma malha fechada - (Discord compartilhado, cerca de 1 hora e 20 minutos);
+11/06/2026 - Configuração do SQL e do SQLITE para a criação da classe histórico - (Discord compartilhado, cerca de 1 hora);
+12/06/2026 - Inicio da criação da classe histórico e do supervisório - (Discord compartilhado, cerca de 2 horas e 50 minutos);
+13/06/2026 - "Finalização" e testes da classe histórico e do supervisório, com implementação do Streamlit;
+16/06/2026 - Reparo de erros dentro do VScode e melhorias na estrtura do código - (Discord compartilhado, cerca de 2 horas);
