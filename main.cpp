@@ -47,7 +47,7 @@ int main()
      alarme_vazao alarmeVazao("AH-VZ", "Area 1");
      alarme_turbidez alarmeTurbidez("AH-TB", "Area 1");
 
-     Controlador controlador("CTRL-101");
+     Controlador controlador("CTRL-101", 700.0, 80.0);
      Historico historico("historico_eta.db");
 
      double consumo_atual = 5 + rand() % 11; // entre 5 e 15 m³/ciclo
@@ -93,6 +93,34 @@ int main()
                     limpar << "";
                     limpar.close();
                }
+               else if (comando.find("SETPOINT=") == 0)
+               {
+                    string valor = comando.substr(9);
+
+                    controlador.set_setpoint(stod(valor));
+
+                    cout << "Novo setpoint recebido: "
+                         << controlador.get_setpoint()
+                         << " m3\n";
+
+                    ofstream limpar("comando.txt");
+                    limpar << "";
+                    limpar.close();
+               }
+               else if (comando.find("TOLERANCIA=") == 0)
+               {
+                    string valor = comando.substr(11);
+
+                    controlador.set_tolerancia(stod(valor));
+
+                    cout << "Nova tolerancia recebida: "
+                         << controlador.get_tolerancia()
+                         << " m3\n";
+
+                    ofstream limpar("comando.txt");
+                    limpar << "";
+                    limpar.close();
+               }
                else if (comando == "EXIT")
                {
                     cout << "Encerrando sistema..." << endl;
@@ -119,15 +147,12 @@ int main()
           cout << "\n===== CICLO " << ciclo << " =====\n";
 
           // Controle em malha fechada
-          controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula);
-
-          // Consumo do processo
-          reservatorio.esvaziar_reservatorio(consumo_atual);
+          controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula, consumo_atual);
 
           // Verifica se está próximo do setpoint
           double nivel = sensorNivel.ler_valor();
 
-          if (abs(nivel - 700) <= 20)
+          if (abs(nivel - controlador.get_setpoint()) <= controlador.get_tolerancia())
           {
                ciclos_estavel++;
           }
@@ -159,7 +184,8 @@ int main()
           json << "{";
 
           json << "\"ciclo\":" << ciclo << ",";
-
+          json << "\"setpoint\":" << controlador.get_setpoint() << ",";
+          json << "\"tolerancia\":" << controlador.get_tolerancia() << ",";
           json << "\"consumo\":" << consumo_atual << ",";
 
           json << "\"sensores\":{";

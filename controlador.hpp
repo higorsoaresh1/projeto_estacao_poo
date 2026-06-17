@@ -16,14 +16,34 @@ class Controlador
 { /*Classe para representar o controlador no sistema de ETA*/
 private:
     string tag;
+    double setpoint;
+    double tolerancia;
 
 public:
-    Controlador(string tag_nova) : tag(tag_nova) {}
+    Controlador(string tag_nova, double setpoint_novo, double tolerancia_nova) : tag(tag_nova), setpoint(setpoint_novo), tolerancia(tolerancia_nova) {}
 
-    void controlar_nivel(sensor_nivel *sensor, Reservatorio *reservatorio, Bomba *bomba, Valvula *valvula)
+    void set_setpoint(double novo_setpoint)
     {
-        double setpoint = 700;
-        double tolerancia = 80;
+        setpoint = novo_setpoint;
+    }
+
+    double get_setpoint()
+    {
+        return setpoint;
+    }
+
+    double get_tolerancia()
+    {
+        return tolerancia;
+    }
+
+    void set_tolerancia(double nova_tolerancia)
+    {
+        tolerancia = nova_tolerancia;
+    }
+
+    void controlar_nivel(sensor_nivel *sensor, Reservatorio *reservatorio, Bomba *bomba, Valvula *valvula, double consumo)
+    {
         double nivel = sensor->ler_valor();
 
         // Controle principal
@@ -50,6 +70,8 @@ public:
         da bomba e da válvula presentes nos get.*/
         reservatorio->encher_reservatorio(bomba->get_vazao_nominal());
         reservatorio->esvaziar_reservatorio(valvula->get_vazao_alivio());
+
+        reservatorio->esvaziar_reservatorio(consumo);
     }
 
     void monitorar(sensor_ph *sensor_ph, sensor_nivel *sensor_nivel, sensor_turbidez *sensor_turbidez, sensor_vazao *sensor_vazao,
