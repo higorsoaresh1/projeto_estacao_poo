@@ -13,6 +13,7 @@
 #include "CONTROLADOR.hpp"
 #include "HISTORICO.hpp"
 #include "ETA.hpp"
+#include "VALVULA_CONSUMO.hpp"
 
 using namespace std;
 
@@ -31,11 +32,14 @@ int main()
      double volume_inicial = rand() % 1000;
      ETA eta("Area 1");
 
-     Reservatorio reservatorio("TK-101", "Area 1", 1000.0, volume_inicial, 5.0);
+     Reservatorio reservatorio("TK-101", "Area 1", 1000.0, volume_inicial);
 
-     Bomba bomba("P-101", "Area 1", 20.0);
+     Inversor inversor("INV-101", "Area 1");
+
+     Bomba bomba("P-101", "Area 1", 20.0, &inversor);
 
      Valvula valvula("XV-101", "Area 1", 15.0);
+     ValvulaConsumo valvulaConsumo("XV-CONS", "Area 1", 0.0, 25.0);
 
      sensor_nivel sensorNivel("LT-101", "Area 1", 0.0, 0.0, 1000.0, &reservatorio);
      sensor_vazao sensorVazao("FT-101", "Area 1", 0.0, 25.0, &bomba);
@@ -47,10 +51,11 @@ int main()
      alarme_vazao alarmeVazao("AH-VZ", "Area 1");
      alarme_turbidez alarmeTurbidez("AH-TB", "Area 1");
 
-     Controlador controlador("CTRL-101", 700.0, 80.0);
+     Controlador controlador("CTRL-101", 700.0, 80.0, 0.8, 0.03);
      Historico historico("historico_eta.db");
 
-     double consumo_atual = 5 + rand() % 11; // entre 5 e 15 m³/ciclo
+     double abertura_consumo = 20;
+     valvulaConsumo.set_abertura(abertura_consumo / 100.0);
 
      int ciclo = 0;
      int ciclos_estavel = 0;
@@ -99,9 +104,7 @@ int main()
 
                     controlador.set_setpoint(stod(valor));
 
-                    cout << "Novo setpoint recebido: "
-                         << controlador.get_setpoint()
-                         << " m3\n";
+                    cout << "Novo setpoint recebido: " << controlador.get_setpoint() << " m3\n";
 
                     ofstream limpar("comando.txt");
                     limpar << "";
@@ -113,9 +116,7 @@ int main()
 
                     controlador.set_tolerancia(stod(valor));
 
-                    cout << "Nova tolerancia recebida: "
-                         << controlador.get_tolerancia()
-                         << " m3\n";
+                    cout << "Nova tolerancia recebida: " << controlador.get_tolerancia() << " m3\n";
 
                     ofstream limpar("comando.txt");
                     limpar << "";
@@ -147,7 +148,7 @@ int main()
           cout << "\n===== CICLO " << ciclo << " =====\n";
 
           // Controle em malha fechada
-          controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula, consumo_atual);
+          controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula, &inversor, &valvulaConsumo);
 
           // Verifica se está próximo do setpoint
           double nivel = sensorNivel.ler_valor();
@@ -164,10 +165,11 @@ int main()
           // Após 5 ciclos estáveis, gera nova perturbação
           if (ciclos_estavel >= 5)
           {
-               consumo_atual = 5 + rand() % 21; // entre 5 e 25
+               abertura_consumo = 20 + rand() % 61;
+               valvulaConsumo.set_abertura(abertura_consumo / 100.0);
 
                cout << "\n*** PERTURBACAO GERADA ***\n";
-               cout << "Novo consumo: " << consumo_atual << " m3/ciclo\n";
+               cout << "Nova abertura: " << abertura_consumo << " %\n";
 
                ciclos_estavel = 0;
           }
@@ -175,7 +177,7 @@ int main()
           // Monitoramento
           controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazao, &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez);
 
-          historico.registrar(ciclo, sensorNivel.ler_valor(), sensorVazao.ler_valor(), sensorPH.ler_valor(), sensorTurbidez.ler_valor(), consumo_atual,
+          historico.registrar(ciclo, sensorNivel.ler_valor(), sensorVazao.ler_valor(), sensorPH.ler_valor(), sensorTurbidez.ler_valor(), valvulaConsumo.get_abertura(),
                               bomba.esta_operando(), valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(), alarmeTurbidez.esta_ativo());
 
           // Escrita no JSON
@@ -186,7 +188,7 @@ int main()
           json << "\"ciclo\":" << ciclo << ",";
           json << "\"setpoint\":" << controlador.get_setpoint() << ",";
           json << "\"tolerancia\":" << controlador.get_tolerancia() << ",";
-          json << "\"consumo\":" << consumo_atual << ",";
+          json << "\"consumo\":" << valvulaConsumo.get_vazao() << ",";
 
           json << "\"sensores\":{";
           json << "\"nivel\":" << sensorNivel.ler_valor() << ",";
@@ -196,26 +198,17 @@ int main()
           json << "},";
 
           json << "\"atuadores\":{";
-          json << "\"bomba\":"
-               << (bomba.esta_operando() ? "true" : "false") << ",";
-
-          json << "\"valvula_alivio\":"
-               << (valvula.esta_aberta() ? "true" : "false");
+          json << "\"frequencia\":" << inversor.get_frequencia() << ",";
+          json << "\"vazao_bomba\":" << bomba.get_vazao() << ",";
+          json << "\"abertura_consumo\":" << valvulaConsumo.get_abertura() << ",";
+          json << "\"valvula_alivio\":" << (valvula.esta_aberta() ? "true" : "false");
           json << "},";
 
           json << "\"alarmes\":{";
-          json << "\"ph\":"
-               << (alarmePH.esta_ativo() ? "true" : "false") << ",";
-
-          json << "\"nivel\":"
-               << (alarmeNivel.esta_ativo() ? "true" : "false") << ",";
-
-          json << "\"vazao\":"
-               << (alarmeVazao.esta_ativo() ? "true" : "false") << ",";
-
-          json << "\"turbidez\":"
-               << (alarmeTurbidez.esta_ativo() ? "true" : "false");
-
+          json << "\"ph\":" << (alarmePH.esta_ativo() ? "true" : "false") << ",";
+          json << "\"nivel\":" << (alarmeNivel.esta_ativo() ? "true" : "false") << ",";
+          json << "\"vazao\":" << (alarmeVazao.esta_ativo() ? "true" : "false") << ",";
+          json << "\"turbidez\":" << (alarmeTurbidez.esta_ativo() ? "true" : "false");
           json << "}";
 
           json << "}\n";
@@ -226,7 +219,7 @@ int main()
 
           cout << "Volume atual: " << reservatorio.get_volume_atual() << " m3\n";
 
-          cout << "Consumo atual: " << consumo_atual << " m3/ciclo\n";
+          cout << "Consumo atual: " << valvulaConsumo.get_vazao() << " m3/ciclo\n";
      }
      json.close();
 

@@ -30,12 +30,12 @@ public:
         cout << "Valvula de alivio " << tag << " fechada." << endl;
     }
 
-    bool esta_aberta()
+    bool esta_aberta() const
     {
         return aberta;
     }
 
-    double get_vazao_alivio()
+    double get_vazao_alivio() const
     { /*Retorna a vazão da válvula se estiver aberta, caso contrário retorna 0.0*/
         if (aberta)
             return vazao_alivio;

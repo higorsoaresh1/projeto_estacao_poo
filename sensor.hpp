@@ -28,12 +28,12 @@ public:
         return valor_lido;
     }
 
-    double get_valor_minimo()
+    double get_valor_minimo() const
     {
         return valor_minimo;
     }
 
-    double get_valor_maximo()
+    double get_valor_maximo() const
     {
         return valor_maximo;
     }
@@ -96,7 +96,7 @@ public:
 
     double ler_valor() override
     { /*Verifica a vazão da bomba*/
-        valor_lido = bomba->get_vazao_nominal();
+        valor_lido = bomba->get_vazao();
 
         cout << "Lendo sensor de vazao " << tag << ".\nVazao bomba = " << valor_lido << " m3/ciclo" << endl;
 
