@@ -13,13 +13,12 @@ private:
     string area;
     double volume_maximo;
     double volume_atual;
-    double consumo;
 
 public:
-    Reservatorio(string tag_nova, string area_nova, double volume_maximo_novo, double volume_atual_novo, double consumo_novo)
-        : tag(tag_nova), area(area_nova), volume_maximo(volume_maximo_novo), volume_atual(volume_atual_novo), consumo(consumo_novo) {}
+    Reservatorio(string tag_nova, string area_nova, double volume_maximo_novo, double volume_atual_novo)
+        : tag(tag_nova), area(area_nova), volume_maximo(volume_maximo_novo), volume_atual(volume_atual_novo) {}
 
-    double get_volume_atual()
+    double get_volume_atual() const
     { /*Retorna o volume atual do reservatório*/
         return volume_atual;
     }
@@ -53,17 +52,6 @@ public:
     void atualizar_volume(double novo_volume)
     { /*Atualiza o volume atual do reservatório*/
         volume_atual = novo_volume;
-    }
-
-    void set_consumo(double novo_consumo)
-    { /*Define o consumo do reservatório*/
-        consumo = novo_consumo;
-    }
-
-    double get_consumo()
-    { /*Retorna o consumo do reservatório*/
-
-        return consumo;
     }
 };
 

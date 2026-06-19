@@ -3,6 +3,8 @@
 *.out
 *.exe
 *.db
+*.db-shm
+*.db-wal
 *.jsonl
 build/
 cmake-build-*/

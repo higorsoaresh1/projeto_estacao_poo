@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include "INVERSOR.hpp"
 
 using namespace std;
 
@@ -11,12 +12,14 @@ class Bomba
 private:
     string tag;
     string area;
-    double vazao_nominal;
+    double vazao_maxima;
     bool operando;
 
+    Inversor *inversor;
+
 public:
-    Bomba(string tag_nova, string area_nova, double vazao_nominal_nova)
-        : tag(tag_nova), area(area_nova), vazao_nominal(vazao_nominal_nova), operando(false) {}
+    Bomba(string tag_nova, string area_nova, double vazao_maxima_nova, Inversor *inversor_novo = nullptr)
+        : tag(tag_nova), area(area_nova), vazao_maxima(vazao_maxima_nova), operando(false), inversor(inversor_novo) {}
 
     void ligar()
     {
@@ -30,15 +33,15 @@ public:
         cout << "Bomba " << tag << " desligada." << endl;
     }
 
-    double get_vazao_nominal()
-    { /*Retorna a vazão nominal da bomba se ela estiver operando, caso contrário retorna 0.0*/
-        if (operando)
-            return vazao_nominal;
-        else
+    double get_vazao() const
+    {
+        if (inversor == nullptr)
             return 0.0;
+
+        return vazao_maxima * inversor->get_frequencia() / 100.0;
     }
 
-    bool esta_operando()
+    bool esta_operando() const
     {
         return operando;
     }
