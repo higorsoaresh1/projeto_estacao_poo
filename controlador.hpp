@@ -9,6 +9,7 @@
 #include "RESERVATORIO.hpp"
 #include "SENSOR.hpp"
 #include "VALVULA.hpp"
+#include "VALVULA_CONSUMO.hpp"
 
 using namespace std;
 
@@ -18,21 +19,26 @@ private:
     string tag;
     double setpoint;
     double tolerancia;
+    double kp;
+    double ki;
+    double erro_integral;
 
 public:
-    Controlador(string tag_nova, double setpoint_novo, double tolerancia_nova) : tag(tag_nova), setpoint(setpoint_novo), tolerancia(tolerancia_nova) {}
+    Controlador(string tag_nova, double setpoint_novo, double tolerancia_nova, double kp_novo, double ki_novo)
+        : tag(tag_nova), setpoint(setpoint_novo), tolerancia(tolerancia_nova), kp(kp_novo), ki(ki_novo), erro_integral(0) {}
 
     void set_setpoint(double novo_setpoint)
     {
         setpoint = novo_setpoint;
+        erro_integral = 0;
     }
 
-    double get_setpoint()
+    double get_setpoint() const
     {
         return setpoint;
     }
 
-    double get_tolerancia()
+    double get_tolerancia() const
     {
         return tolerancia;
     }
@@ -42,19 +48,37 @@ public:
         tolerancia = nova_tolerancia;
     }
 
-    void controlar_nivel(sensor_nivel *sensor, Reservatorio *reservatorio, Bomba *bomba, Valvula *valvula, double consumo)
+    void controlar_nivel(sensor_nivel *sensor, Reservatorio *reservatorio, Bomba *bomba, Valvula *valvula, Inversor *inversor, ValvulaConsumo *consumo)
     {
         double nivel = sensor->ler_valor();
 
-        // Controle principal
-        if (nivel < setpoint - tolerancia)
-        { /*Verifica se o nível está abaixo do setpoint menos a tolerância*/
-            bomba->ligar();
-        }
-        else if (nivel > setpoint + tolerancia)
+        double erro = setpoint - nivel;
+
+        double proporcional = kp * erro;
+
+        double integral = ki * erro_integral;
+
+        double saida = proporcional + integral;
+
+        if (saida > 100)
         {
-            bomba->desligar();
+            saida = 100;
         }
+        else if (saida < 0)
+        {
+            saida = 0;
+        }
+        else
+        {
+            erro_integral += erro;
+        }
+
+        inversor->set_frequencia(saida);
+
+        if (saida > 0)
+            bomba->ligar();
+        else
+            bomba->desligar();
 
         if (nivel > 950)
         {
@@ -68,10 +92,10 @@ public:
         /*Essas funções são chamadas para atualizar o volume do reservatório, e não precisa necessariamente,
         estarem reservados aos if, pois o que fiz se o volume esta sendo modificado é a variável bool ativo e bool operando
         da bomba e da válvula presentes nos get.*/
-        reservatorio->encher_reservatorio(bomba->get_vazao_nominal());
+        reservatorio->encher_reservatorio(bomba->get_vazao());
         reservatorio->esvaziar_reservatorio(valvula->get_vazao_alivio());
 
-        reservatorio->esvaziar_reservatorio(consumo);
+        reservatorio->esvaziar_reservatorio(consumo->get_vazao());
     }
 
     void monitorar(sensor_ph *sensor_ph, sensor_nivel *sensor_nivel, sensor_turbidez *sensor_turbidez, sensor_vazao *sensor_vazao,

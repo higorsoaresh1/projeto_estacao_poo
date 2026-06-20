@@ -42,59 +42,10 @@ if dados is None:
     st.warning("Aguardando dados da ETA...")
     st.stop()
 
-# ---------------------------------------------------
-# Sensores
-# ---------------------------------------------------
-
 sensores = dados["sensores"]
 atuadores = dados["atuadores"]
 alarmes = dados["alarmes"]
 
-
-
-st.header("Sensores")
-
-col1, col2, col3, col4, col5 = st.columns(5)
-
-col1.metric("Nível", f"{sensores['nivel']:.1f} m³")
-col2.metric("Vazão", f"{sensores['vazao']:.1f} m³/ciclo")
-col3.metric("pH", f"{sensores['ph']:.2f}")
-col4.metric("Turbidez", f"{sensores['turbidez']:.2f} NTU")
-col5.metric("Consumo", f"{dados['consumo']:.1f} m³/ciclo")
-
-st.header("Tendência do Nível")
-
-try:
-    conexao = sqlite3.connect(
-        "historico_eta.db",
-        check_same_thread=False
-    )
-
-    consulta = """
-    SELECT ciclo, nivel
-    FROM historico
-    ORDER BY ciclo DESC
-    LIMIT 100
-    """
-
-    df = pd.read_sql_query(consulta, conexao)
-
-    conexao.close()
-
-    if not df.empty:
-        df = df.sort_values("ciclo")
-
-        st.write("Quantidade de pontos:", len(df))
-        st.write("Último ciclo:", df["ciclo"].max())
-
-        st.line_chart(
-            df.set_index("ciclo")["nivel"]
-    )
-
-except Exception as e:
-    st.info(f"Banco ainda não disponível: {e}")
-
-#Dados de controle
 st.header("Dados de Controle")
 
 col1, col2 = st.columns(2)
@@ -113,6 +64,17 @@ nova_tolerancia = st.number_input("Nova Tolerância", min_value=1.0, max_value=5
 if st.button("DEFINIR TOLERÂNCIA"):
     with open("comando.txt", "w") as f:
         f.write(f"TOLERANCIA={nova_tolerancia}")
+
+st.header("Sensores")
+
+col1, col2, col3, col4, col5 = st.columns(5)
+
+col1.metric("Nível", f"{sensores['nivel']:.1f} m³")
+col2.metric("Vazão", f"{sensores['vazao']:.1f} m³/ciclo")
+col3.metric("pH", f"{sensores['ph']:.2f}")
+col4.metric("Turbidez", f"{sensores['turbidez']:.2f} NTU")
+col5.metric("Consumo", f"{dados['consumo']:.1f} m³/ciclo")
+
 # ---------------------------------------------------
 # Atuadores
 # ---------------------------------------------------
@@ -157,15 +119,10 @@ if alarmes["turbidez"]:
 else:
     st.success("Turbidez normal")
 
-# ---------------------------------------------------
-# Comandos START / STOP
-# ---------------------------------------------------
-
-st.sidebar.header("Comandos")
-
-if st.sidebar.button("▶ START"):
-    with open("comando.txt", "w") as f:
-        f.write("START")
+# Menu Lateral (Configurações do Sistema)
+st.sidebar.header("Comandos do Sistema")
+if st.sidebar.button("▶ START SYSTEM", use_container_width=True, type="primary"):
+    with open("comando.txt", "w") as f: f.write("START")
 
 if st.sidebar.button("⏹ STOP"):
     with open("comando.txt", "w") as f:
@@ -178,3 +135,35 @@ if st.sidebar.button("❌ EXIT"):
 # ---------------------------------------------------
 # Histórico do SQLite
 # ---------------------------------------------------
+
+st.header("Tendência do Nível")
+
+try:
+    conexao = sqlite3.connect(
+        "historico_eta.db",
+        check_same_thread=False
+    )
+
+    consulta = """
+    SELECT ciclo, nivel
+    FROM historico
+    ORDER BY ciclo DESC
+    LIMIT 100
+    """
+
+    df = pd.read_sql_query(consulta, conexao)
+
+    conexao.close()
+
+    if not df.empty:
+        df = df.sort_values("ciclo")
+
+        st.write("Quantidade de pontos:", len(df))
+        st.write("Último ciclo:", df["ciclo"].max())
+
+        st.line_chart(
+            df.set_index("ciclo")["nivel"]
+    )
+
+except Exception as e:
+    st.info(f"Banco ainda não disponível: {e}")
