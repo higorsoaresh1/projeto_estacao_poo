@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <cmath> // Adicionado para garantir o funcionamento do abs() ou std::abs() se necessário
 
 #include "ALARME.hpp"
 #include "BOMBA.hpp"
@@ -48,16 +49,12 @@ public:
         tolerancia = nova_tolerancia;
     }
 
-    void controlar_nivel(sensor_nivel *sensor, Reservatorio *reservatorio, Bomba *bomba, Valvula *valvula, Inversor *inversor, ValvulaConsumo *consumo)
+    void controlar_nivel(sensor_nivel *sensor, Reservatorio *reservatorio, Bomba *bomba, Valvula *valvula, Inversor *inversor, ValvulaConsumo *consumo, double consumo_externo_solicitado)
     {
         double nivel = sensor->ler_valor();
-
         double erro = setpoint - nivel;
-
         double proporcional = kp * erro;
-
         double integral = ki * erro_integral;
-
         double saida = proporcional + integral;
 
         if (saida > 100)
@@ -80,6 +77,40 @@ public:
         else
             bomba->desligar();
 
+        double vazao_saida_real = 0.0;
+
+        if (nivel <= 100.0)
+        {
+            // Bloqueio Total Efetivo:
+            consumo->set_abertura(0.0);
+
+            // Forçamos a vazão de saída para 0 para interromper a simulação física de esvaziamento
+            vazao_saida_real = 0.0;
+
+            cout << " [BLOQUEIO CRÍTICO] Nível atingiu o piso mínimo (" << nivel
+                 << " m³). Válvula de saída FECHADA TOTALMENTE para recuperação!" << endl;
+        }
+        else
+        {
+            // Limita e raciona se a demanda externa for maior ou igual a 20.0 m³
+            if (consumo_externo_solicitado >= 20.0)
+            {
+                // Limita a vazão real de saída em 19.5 m³ (Margem segura abaixo da bomba de 20)
+                // 19.5 m³ / 25.0 m³ capacidade máxima da válvula = 0.78 (78% de abertura)
+                consumo->set_abertura(19.5 / 25.0);
+                vazao_saida_real = consumo->get_vazao();
+
+                cout << " [RACIONAMENTO ATIVO] Demanda (" << consumo_externo_solicitado
+                     << " m³). Valvula estrangulada para 78% (" << vazao_saida_real << " m³)." << endl;
+            }
+            else
+            {
+                // Fluxo normal flutuante
+                consumo->set_abertura(consumo_externo_solicitado / 25.0);
+                vazao_saida_real = consumo->get_vazao();
+            }
+        }
+
         if (nivel > 950)
         {
             valvula->abrir();
@@ -89,22 +120,29 @@ public:
             valvula->fechar();
         }
 
-        /*Essas funções são chamadas para atualizar o volume do reservatório, e não precisa necessariamente,
-        estarem reservados aos if, pois o que fiz se o volume esta sendo modificado é a variável bool ativo e bool operando
-        da bomba e da válvula presentes nos get.*/
         reservatorio->encher_reservatorio(bomba->get_vazao());
         reservatorio->esvaziar_reservatorio(valvula->get_vazao_alivio());
-
-        reservatorio->esvaziar_reservatorio(consumo->get_vazao());
+        reservatorio->esvaziar_reservatorio(vazao_saida_real);
     }
 
-    void monitorar(sensor_ph *sensor_ph, sensor_nivel *sensor_nivel, sensor_turbidez *sensor_turbidez, sensor_vazao *sensor_vazao,
-                   alarme_ph *alarme_ph, alarme_nivel_alto *alarme_nivel_alto, alarme_vazao *alarme_vazao, alarme_turbidez *alarme_turbidez)
+    // O método agora recebe o resultado lógico 'tem_deficit' e não precisa mais do ponteiro do inversor
+    void monitorar(sensor_ph *sensor_ph, sensor_nivel *sensor_nivel, sensor_turbidez *sensor_turbidez, sensor_vazao *sensor_vazao, alarme_ph *alarme_ph,
+                   alarme_nivel *alarme_nivel, alarme_vazao *alarme_vazao, alarme_turbidez *alarme_turbidez, alarme_racionamento *alarme_rac, double consumo_solicitado)
     { /*Método responsável por monitorar os sensores do sistema*/
         double ph = sensor_ph->ler_valor();
         double nivel = sensor_nivel->ler_valor();
         double turbidez = sensor_turbidez->ler_valor();
         double vazao = sensor_vazao->ler_valor();
+
+        // Alarme baseado puramente no gatilho de requisição de sobrecarga externa
+        if (consumo_solicitado >= 20.0)
+        {
+            alarme_rac->disparar();
+        }
+        else
+        {
+            alarme_rac->silenciar();
+        }
 
         // Monitoramento sensor pH.
         if (ph > sensor_ph->get_valor_maximo())
@@ -124,24 +162,25 @@ public:
             alarme_ph->silenciar();
         }
 
-        // Monitoramento sensor de nível.
-        if (nivel > sensor_nivel->get_valor_maximo())
+        // MONITORAMENTO SENSOR DE NÍVEL COM ALERTA DE NÍVEL BAIXO OPERACIONAL E NÍVEL ALTO DE TRANSBORDO
+        if (nivel <= sensor_nivel->get_valor_minimo())
         {
-            cout << "Nivel alto detectado! \n"
-                 << "Nivel Lido: " << nivel << endl;
-            alarme_nivel_alto->disparar();
+            cout << "[ALERTA] Nível Baixo Operacional! Volume em " << nivel << " m³." << endl;
+            alarme_nivel->disparar();
         }
-        else if (nivel < sensor_nivel->get_valor_minimo())
+        else if (nivel > sensor_nivel->get_valor_maximo())
         {
-            cout << "Nivel baixo detectado! \n"
-                 << "Nivel Lido: " << nivel << endl;
-            alarme_nivel_alto->disparar();
+            cout << "[ALERTA] Nível Alto de Transbordo! Volume em " << nivel << " m³." << endl;
+            alarme_nivel->disparar();
         }
         else
         {
-            alarme_nivel_alto->silenciar();
+            // Só silencia se o alarme estava ativo antes, para evitar spam de "Nível normalizado"
+            if (alarme_nivel->esta_ativo())
+            {
+                alarme_nivel->silenciar();
+            }
         }
-
         // Monitoramento sensor de vazão.
         if (vazao > sensor_vazao->get_valor_maximo())
         {
@@ -177,6 +216,18 @@ public:
         {
             alarme_turbidez->silenciar();
         }
+    }
+
+    bool calcular_deficit_hidrico(sensor_nivel *sensor, Inversor *inversor, Bomba *bomba, ValvulaConsumo *consumo)
+    {
+        double nivel = sensor->ler_valor();
+        double erro = setpoint - nivel;
+        double limite_inferior = setpoint - tolerancia;
+
+        double vazao_entrada = bomba->get_vazao();
+        double vazao_saida = consumo->get_vazao();
+
+        return (nivel < limite_inferior && vazao_saida > vazao_entrada) || (inversor->get_frequencia() == 100.0 && abs(erro) > tolerancia);
     }
 };
 

@@ -60,21 +60,21 @@ public:
     }
 };
 
-class alarme_nivel_alto : public Alarme
-{ /*Classe que representa um alarme de nível alto no sistema de ETA*/
+// ALARME DE NÍVEL COM ALERTA DE NÍVEL BAIXO OPERACIONAL E NÍVEL ALTO DE TRANSBORDO
+class alarme_nivel : public Alarme
+{
 public:
     using Alarme::Alarme;
 
     void disparar() override
     {
         ativo = true;
-        cout << "Alarme de nivel alto " << tag << " ativado." << endl;
     }
 
     void silenciar() override
     {
         ativo = false;
-        cout << "Alarme de nivel alto " << tag << " desativado." << endl;
+        cout << "Nível do reservatório normalizado." << endl;
     }
 
     bool esta_ativo() override
@@ -121,6 +121,29 @@ public:
     {
         ativo = false;
         cout << "Alarme de turbidez " << tag << " desativado." << endl;
+    }
+
+    bool esta_ativo() override
+    {
+        return ativo;
+    }
+};
+
+class alarme_racionamento : public Alarme
+{ /* Classe que representa o status do racionamento na ETA */
+public:
+    using Alarme::Alarme;
+
+    void disparar() override
+    {
+        ativo = true;
+        cout << "Racionamento de água ATIVADO devido à alto consumo!" << endl;
+    }
+
+    void silenciar() override
+    {
+        ativo = false;
+        cout << "Racionamento de água DESATIVADO. Sistema normalizado." << endl;
     }
 
     bool esta_ativo() override
