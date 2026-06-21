@@ -39,23 +39,22 @@ int main()
      Bomba bomba("P-101", "Area 1", 20.0, &inversor);
 
      Valvula valvula("XV-101", "Area 1", 15.0);
-     ValvulaConsumo valvulaConsumo("XV-CONS", "Area 1", 0.0, 25.0);
+     ValvulaConsumo valvulaConsumo("XV-CONS", "Area 1", 1.0, 25.0);
 
-     sensor_nivel sensorNivel("LT-101", "Area 1", 0.0, 0.0, 1000.0, &reservatorio);
+     sensor_nivel sensorNivel("LT-101", "Area 1", 0.0, 150.0, 1000.0, &reservatorio);
      sensor_vazao sensorVazao("FT-101", "Area 1", 0.0, 25.0, &bomba);
      sensor_ph sensorPH("PH-101", "Area 1", 7.0, 6.0, 8.0);
      sensor_turbidez sensorTurbidez("TB-101", "Area 1", 0.5, 0.0, 1.0);
 
      alarme_ph alarmePH("AH-PH", "Area 1");
-     alarme_nivel_alto alarmeNivel("AH-NV", "Area 1");
+     alarme_nivel alarmeNivel("AH-NV", "Area 1");
      alarme_vazao alarmeVazao("AH-VZ", "Area 1");
      alarme_turbidez alarmeTurbidez("AH-TB", "Area 1");
-
+     alarme_racionamento alarmeRac("AH-RAC", "Area 1");
      Controlador controlador("CTRL-101", 700.0, 80.0, 0.8, 0.03);
      Historico historico("historico_eta.db");
 
-     double abertura_consumo = 20;
-     valvulaConsumo.set_abertura(abertura_consumo / 100.0);
+     double consumo_externo_solicitado = 5.0 + ((double)rand() / RAND_MAX) * 20.0;
 
      int ciclo = 0;
      int ciclos_estavel = 0;
@@ -144,13 +143,23 @@ int main()
           }
 
           ciclo++;
-
           cout << "\n===== CICLO " << ciclo << " =====\n";
 
-          // Controle em malha fechada
-          controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula, &inversor, &valvulaConsumo);
+          // Nova perturbação uniforme após estabilizar
+          if (ciclos_estavel >= 5)
+          {
+               consumo_externo_solicitado = 5.0 + ((double)rand() / RAND_MAX) * 20.0;
 
-          // Verifica se está próximo do setpoint
+               cout << "\n*** PERTURBACAO GERADA (Nova Demanda Externa) ***\n";
+               cout << "Consumo Externo Solicitado: " << consumo_externo_solicitado << " m³/ciclo\n";
+
+               ciclos_estavel = 0;
+          }
+
+          // Controle em malha fechada
+          controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula, &inversor, &valvulaConsumo, consumo_externo_solicitado);
+
+          // Verifica estabilidade
           double nivel = sensorNivel.ler_valor();
 
           if (abs(nivel - controlador.get_setpoint()) <= controlador.get_tolerancia())
@@ -162,23 +171,12 @@ int main()
                ciclos_estavel = 0;
           }
 
-          // Após 5 ciclos estáveis, gera nova perturbação
-          if (ciclos_estavel >= 5)
-          {
-               abertura_consumo = 20 + rand() % 61;
-               valvulaConsumo.set_abertura(abertura_consumo / 100.0);
+          // Monitoramento avaliando diretamente o consumo solicitado
+          controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazao, &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez, &alarmeRac, consumo_externo_solicitado);
 
-               cout << "\n*** PERTURBACAO GERADA ***\n";
-               cout << "Nova abertura: " << abertura_consumo << " %\n";
-
-               ciclos_estavel = 0;
-          }
-
-          // Monitoramento
-          controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazao, &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez);
-
+          // Registro atualizado incluindo o alarme de racionamento no banco de dados SQLite
           historico.registrar(ciclo, sensorNivel.ler_valor(), sensorVazao.ler_valor(), sensorPH.ler_valor(), sensorTurbidez.ler_valor(), valvulaConsumo.get_abertura(),
-                              bomba.esta_operando(), valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(), alarmeTurbidez.esta_ativo());
+                              bomba.esta_operando(), valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(), alarmeTurbidez.esta_ativo(), alarmeRac.esta_ativo());
 
           // Escrita no JSON
           /*Criação da lógica da escrita do JSON LINHA, pois o padrão JSON não permite trabalhar em
@@ -188,7 +186,8 @@ int main()
           json << "\"ciclo\":" << ciclo << ",";
           json << "\"setpoint\":" << controlador.get_setpoint() << ",";
           json << "\"tolerancia\":" << controlador.get_tolerancia() << ",";
-          json << "\"consumo\":" << valvulaConsumo.get_vazao() << ",";
+          json << "\"vazao_saida\":" << valvulaConsumo.get_vazao() << ",";
+          json << "\"demanda\":" << consumo_externo_solicitado << ",";
 
           json << "\"sensores\":{";
           json << "\"nivel\":" << sensorNivel.ler_valor() << ",";
@@ -208,7 +207,8 @@ int main()
           json << "\"ph\":" << (alarmePH.esta_ativo() ? "true" : "false") << ",";
           json << "\"nivel\":" << (alarmeNivel.esta_ativo() ? "true" : "false") << ",";
           json << "\"vazao\":" << (alarmeVazao.esta_ativo() ? "true" : "false") << ",";
-          json << "\"turbidez\":" << (alarmeTurbidez.esta_ativo() ? "true" : "false");
+          json << "\"turbidez\":" << (alarmeTurbidez.esta_ativo() ? "true" : "false") << ",";
+          json << "\"racionamento\":" << (alarmeRac.esta_ativo() ? "true" : "false");
           json << "}";
 
           json << "}\n";
@@ -218,8 +218,8 @@ int main()
           this_thread::sleep_for(chrono::seconds(1));
 
           cout << "Volume atual: " << reservatorio.get_volume_atual() << " m3\n";
-
-          cout << "Consumo atual: " << valvulaConsumo.get_vazao() << " m3/ciclo\n";
+          cout << "Consumo Solicitado: " << consumo_externo_solicitado << " m3/ciclo\n";
+          cout << "Vazao Efetiva de Saida: " << valvulaConsumo.get_vazao() << " m3/ciclo\n";
      }
      json.close();
 
