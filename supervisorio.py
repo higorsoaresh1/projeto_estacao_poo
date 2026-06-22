@@ -46,17 +46,24 @@ sensores = dados["sensores"]
 atuadores = dados["atuadores"]
 alarmes = dados["alarmes"]
 
+if alarmes.get("racionamento", False):
+    st.error("🚨 **SISTEMA EM REGIME DE URGÊNCIA:** Racionamento ativo por sobrecarga de demanda!", icon="⚠️")
+
+if alarmes.get("nivel", False):
+    st.warning("🚨 **ALERTA DE NÍVEL CRÍTICO:** Verificar o nível do reservatório!", icon="⚠️")
+
 # Bloco 1: Monitoramento Principal (Sensores)
 with st.container(border=True):
     st.subheader("📊 Monitoramento de Sensores")
 
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 col1.metric("Nível", f"{sensores['nivel']:.1f} m³")
 col2.metric("Vazão de Entrada", f"{atuadores['vazao_bomba']:.1f} m³/ciclo")
-col3.metric("Consumo", f"{dados['consumo']:.1f} m³/ciclo")
-col4.metric("pH", f"{sensores['ph']:.2f}")
-col5.metric("Turbidez", f"{sensores['turbidez']:.2f} NTU")
+col3.metric("Vazão de Saída", f"{dados['vazao_saida']:.1f} m³/ciclo")
+col4.metric("Demanda", f"{dados['demanda']:.1f} m³/ciclo")
+col5.metric("pH", f"{sensores['ph']:.2f}")
+col6.metric("Turbidez", f"{sensores['turbidez']:.2f} NTU")
 
 st.header("Controle PI")
 
@@ -69,11 +76,12 @@ col_pi, col_at = st.columns([1.2, 1])
 with col_pi:
     with st.container(border=True):
         st.subheader("Dados PI")
-        c1, c2, c3 = st.columns(3)
+        c1, c2, c3, c4 = st.columns(4)
         c1.metric("Setpoint", f"{dados['setpoint']:.1f} m³")
         # O delta exibe o desvio de forma visual (positivo/negativo)
-        c2.metric("Nível Atual", f"{sensores['nivel']:.1f} m³", delta=f"Erro: {erro:.1f} m³", delta_color="inverse")
-        c3.metric("Frequência Inversor", f"{atuadores['frequencia']:.1f} %")
+        c2.metric("Tolerância", f"{dados['tolerancia']:.1f} m³")
+        c3.metric("Nível Atual", f"{sensores['nivel']:.1f} m³", delta=f"Erro: {erro:.1f} m³", delta_color="inverse")
+        c4.metric("Frequência Inversor", f"{atuadores['frequencia']:.1f} %")
 
 with col_at:
     with st.container(border=True):
@@ -166,6 +174,12 @@ with col_alarm:
             
             if alarmes["turbidez"]: st.error("❌ Falha de Turbidez", icon="⚠️")
             else: st.success("✔️ Turbidez Normal")
+
+        st.markdown("---")
+        if alarmes.get("racionamento", False):
+            st.warning("⚠️ **RACIONAMENTO:** Restrição de Vazão Ativa", icon="⚡")
+        else:
+            st.info("✔️ Distribuição Normal (Sem Racionamento)")
 
 # Menu Lateral (Configurações do Sistema)
 st.sidebar.header("Comandos do Sistema")

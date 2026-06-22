@@ -60,7 +60,7 @@ public:
     }
 
     void registrar(int ciclo, double nivel, double vazao, double ph, double turbidez, double consumo, bool bomba,
-                   bool valvula, bool alarme_ph, bool alarme_nivel, bool alarme_vazao, bool alarme_turbidez)
+                   bool valvula, bool alarme_ph, bool alarme_nivel, bool alarme_vazao, bool alarme_turbidez, bool alarme_rac)
     { /*Registro dos dados no banco de dados*/
         string sql = "INSERT INTO historico "
                      "(ciclo,nivel,vazao,ph,turbidez,consumo,"
