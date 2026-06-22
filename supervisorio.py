@@ -1,10 +1,15 @@
-import streamlit as st
 import json
 import sqlite3
 import pandas as pd
+import streamlit as st
+import streamlit.components.v1 as components
 from streamlit_autorefresh import st_autorefresh
 
-# Atualiza automaticamente a cada 1 segundo
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", message=".*components.v1.html.*")
+
+# Atualização em tempo real (1 segundo)
 st_autorefresh(interval=1000, key="eta_refresh")
 
 st.set_page_config(
@@ -14,29 +19,60 @@ st.set_page_config(
 
 st.title("🏭 Supervisório ETA")
 
-# ---------------------------------------------------
-# Função para ler o último registro do JSONL
-# ---------------------------------------------------
+# Funções Auxiliares de Renderização e Componentes
 
+def renderizar_tanque_animado(nivel_atual, capacidade_maxima=1000.0):
+    setpoint_valor = float(dados.get("setpoint", 700.0))
+    tolerancia_valor = float(dados.get("tolerancia", 80.0))
+    
+    # Conversão para porcentagens de altura física (0% a 100%)
+    pct_fluido = max(0.0, min(100.0, (nivel_atual / capacidade_maxima) * 100))
+    pct_sp = max(0.0, min(100.0, (setpoint_valor / capacidade_maxima) * 100))
+    pct_tol_sup = max(0.0, min(100.0, ((setpoint_valor + tolerancia_valor) / capacidade_maxima) * 100))
+    pct_tol_inf = max(0.0, min(100.0, ((setpoint_valor - tolerancia_valor) / capacidade_maxima) * 100))
+
+    # Cores dinâmicas do fluido (Regra Dupla 80)
+    if pct_fluido <= 20.0: cor_agua = "#ff4b4b"      # Vermelho Crítico
+    elif pct_fluido <= 25.0: cor_agua = "#ffa500"    # Laranja Atenção
+    elif pct_fluido >= 85.0: cor_agua = "#004080"    # Azul Escuro (Transbordo)
+    else: cor_agua = "#4da6ff"                       # Azul Normal
+
+    html_conteudo = f"""
+    <div style="position: relative; width: 140px; height: 210px; margin: 0 auto; font-family: sans-serif;">
+        <div style="position: absolute; top: 10px; left: 0; width: 130px; height: 190px; border: 4px solid #4f5b66; border-radius: 5px 5px 12px 12px; background: #e1e5eb; overflow: hidden; display: flex; align-items: flex-end; z-index: 2; box-shadow: inset 3px 3px 8px rgba(0,0,0,0.15);">
+            
+            <div style="position: absolute; width: 100%; text-align: center; top: 40%; left: 0; font-size: 14px; font-weight: bold; color: #1c2833; z-index: 5; text-shadow: 1px 1px 2px white;">
+                {nivel_atual:.1f} m³<br><span style="font-size:11px; font-weight:normal; color:#444;">({pct_fluido:.0f}%)</span>
+            </div>
+
+            <div style="position: absolute; width: 100%; bottom: {pct_sp}%; border-bottom: 2px dashed #1db954; z-index: 4;"><span style="position:absolute; right:1px; background:#1db954; color:white; font-size:7px; padding:0 1px; border-radius:1px; transform:translateY(-50%);">SP</span></div>
+            <div style="position: absolute; width: 100%; bottom: {pct_tol_sup}%; border-bottom: 1px dotted #ff5555; z-index: 4;"><span style="position:absolute; right:1px; background:#ff5555; color:white; font-size:7px; padding:0 1px; border-radius:1px; transform:translateY(-50%);">+TOL</span></div>
+            <div style="position: absolute; width: 100%; bottom: {pct_tol_inf}%; border-bottom: 1px dotted #ff5555; z-index: 4;"><span style="position:absolute; right:1px; background:#ff5555; color:white; font-size:7px; padding:0 1px; border-radius:1px; transform:translateY(-50%);">-TOL</span></div>
+
+            <div style="width: 100%; height: {pct_fluido}%; background: {cor_agua}; transition: height 0.5s ease-out; z-index: 3;"></div>
+        </div>
+    </div>
+    """
+    return components.html(html_conteudo, height=210, scrolling=False)
+
+def renderizar_status_atuador(condicao, texto_ativo, texto_inativo):
+    """Gera o badge estilizado para os atuadores evitando repetição de HTML."""
+    cor, texto = ("#1db954", texto_ativo) if condicao else ("#ff4b4b", texto_inativo)
+    html = f'<div style="background:{cor}; color:white; text-align:center; padding:6px; border-radius:6px; font-weight:bold; font-size:14px;">{texto}</div>'
+    return st.markdown(html, unsafe_allow_html=True)
+
+# Lógica de Leitura do Banco de Dados / JSONL
 def ler_ultimo_registro():
     try:
         with open("dados_eta.jsonl", "r", encoding="utf-8") as arquivo:
             linhas = arquivo.readlines()
-
             if linhas:
                 return json.loads(linhas[-1])
-
-    except:
+    except Exception:
         return None
-
     return None
 
-
 dados = ler_ultimo_registro()
-
-# ---------------------------------------------------
-# Caso ainda não exista dado
-# ---------------------------------------------------
 
 if dados is None:
     st.warning("Aguardando dados da ETA...")
@@ -46,31 +82,56 @@ sensores = dados["sensores"]
 atuadores = dados["atuadores"]
 alarmes = dados["alarmes"]
 
+# Alertas de Segurança no Topo
 if alarmes.get("racionamento", False):
     st.error("🚨 **SISTEMA EM REGIME DE URGÊNCIA:** Racionamento ativo por sobrecarga de demanda!", icon="⚠️")
 
 if alarmes.get("nivel", False):
     st.warning("🚨 **ALERTA DE NÍVEL CRÍTICO:** Verificar o nível do reservatório!", icon="⚠️")
 
+# Interface Gráfica (Painel de Controle)
+
 # Bloco 1: Monitoramento Principal (Sensores)
 with st.container(border=True):
-    st.subheader("📊 Monitoramento de Sensores")
+    st.subheader("📊 Monitoramento de Sensores e Processo")
+    col_tanque, col_grandezas = st.columns([1, 4])
 
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+    with col_tanque:
+        renderizar_tanque_animado(sensores['nivel'])
 
-col1.metric("Nível", f"{sensores['nivel']:.1f} m³")
-col2.metric("Vazão de Entrada", f"{atuadores['vazao_bomba']:.1f} m³/ciclo")
-col3.metric("Vazão de Saída", f"{dados['vazao_saida']:.1f} m³/ciclo")
-col4.metric("Demanda", f"{dados['demanda']:.1f} m³/ciclo")
-col5.metric("pH", f"{sensores['ph']:.2f}")
-col6.metric("Turbidez", f"{sensores['turbidez']:.2f} NTU")
-
-st.header("Controle PI")
+    with col_grandezas:
+        c_linha1_1, c_linha1_2, c_linha1_3 = st.columns(3)
+        c_linha1_1.metric("Nível", f"{sensores['nivel']:.1f} m³")
+        c_linha1_2.metric("Vazão de Entrada", f"{atuadores['vazao_bomba']:.1f} m³/ciclo")
+        c_linha1_3.metric("Vazão de Saída", f"{dados['vazao_saida']:.1f} m³/ciclo")
+        
+        st.markdown("---")
+        
+        c_linha2_1, c_linha2_2, c_linha2_3 = st.columns(3)
+        c_linha2_1.metric("Turbidez", f"{sensores['turbidez']:.2f} NTU")
+        c_linha2_2.metric("pH", f"{sensores['ph']:.2f}")
+        
+        with c_linha2_3:
+            demanda_valor = dados['demanda']
+            if demanda_valor >= 20.0:
+                st.markdown(
+                    f"""
+                    <div style="background-color: #ff4b4b; border-radius: 0.5rem; padding: 0.75rem; border-left: 4px solid #b71c1c; font-family: var(--font); color: white; margin-top: -4px; margin-bottom: 0;">
+                        <div style="font-size: 14px; opacity: 0.9; margin-bottom: 2px;">Demanda</div>
+                        <div style="font-size: 28px; font-weight: 600; line-height: 1.2;">
+                            🚨 {demanda_valor:.1f} <span style="font-size: 16px; font-weight: 400;">m³/ciclo</span>
+                        </div>
+                        <div style="font-size: 11px; font-weight: 700; margin-top: 4px;">SOBRECARGA DETECTADA!</div>
+                    </div>
+                    """, 
+                    unsafe_allow_html=True
+                )
+            else:
+                st.metric("Demanda", f"{demanda_valor:.1f} m³/ciclo")
 
 # Bloco 2: Processo e Malha de Controle PI
+st.header("Controle PI")
 erro = dados["setpoint"] - sensores["nivel"]
-
-# Usando colunas assimétricas para balancear os Atuadores ao lado do PI
 col_pi, col_at = st.columns([1.2, 1])
 
 with col_pi:
@@ -78,7 +139,6 @@ with col_pi:
         st.subheader("Dados PI")
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Setpoint", f"{dados['setpoint']:.1f} m³")
-        # O delta exibe o desvio de forma visual (positivo/negativo)
         c2.metric("Tolerância", f"{dados['tolerancia']:.1f} m³")
         c3.metric("Nível Atual", f"{sensores['nivel']:.1f} m³", delta=f"Erro: {erro:.1f} m³", delta_color="inverse")
         c4.metric("Frequência Inversor", f"{atuadores['frequencia']:.1f} %")
@@ -88,52 +148,33 @@ with col_at:
         st.subheader("Atuadores")
         c1, c2, c3 = st.columns(3)
         
-        # Uso de markdown simples para simular tags de status limpas
         with c1:
             st.caption("Bomba")
-            if atuadores["vazao_bomba"] > 0:
-                st.markdown("🟢 **LIGADA**")
-            else:
-                st.markdown("🔴 **DESLIGADA**")
+            renderizar_status_atuador(atuadores["vazao_bomba"] > 0, "🟢 LIGADA", "🔴 DESLIGADA")
                 
         with c2:
             st.metric("Válvula Saída", f"{atuadores['abertura_consumo']*100:.0f}%")
             
         with c3:
             st.caption("Válvula Alívio")
-            if atuadores['valvula_alivio']:
-                st.markdown("🟢 **ABERTA**")
-            else:
-                st.markdown("🔴 **FECHADA**")
+            renderizar_status_atuador(atuadores['valvula_alivio'], "🟢 ABERTA", "🔴 FECHADA")
 
 # Bloco 3: Gráfico de Tendência
 with st.container(border=True):
     st.subheader("📈 Tendência do Nível")
     try:
         conexao = sqlite3.connect("historico_eta.db", check_same_thread=False)
-        consulta = "SELECT ciclo, nivel FROM historico ORDER BY ciclo DESC LIMIT 100"
-        df = pd.read_sql_query(consulta, conexao)
+        df = pd.read_sql_query("SELECT ciclo, nivel FROM historico ORDER BY ciclo DESC LIMIT 100", conexao)
         conexao.close()
 
         if not df.empty:
             df = df.sort_values("ciclo")
-            
-            # Sub-métricas discretas para o gráfico
             c_info1, c_info2 = st.columns(2)
             c_info1.caption(f"**Pontos em tela:** {len(df)}")
             c_info2.caption(f"**Último Ciclo:** {df['ciclo'].max()}")
-            
             st.line_chart(df.set_index("ciclo")["nivel"], height=250)
     except Exception as e:
         st.info(f"Banco ainda não disponível: {e}")
-
-#Dados de controle
-st.header("Dados de Controle")
-
-col1, col2 = st.columns(2)
-
-col1.metric("Setpoint Nível", f"{dados['setpoint']:.1f} m³")
-col2.metric("Toleância", f"{dados['tolerancia']:.1f} m³")
 
 # Bloco 4: Alarmes e Parâmetros Operacionais
 col_param, col_alarm = st.columns([1.2, 1])
@@ -141,26 +182,24 @@ col_param, col_alarm = st.columns([1.2, 1])
 with col_param:
     with st.container(border=True):
         st.subheader("🔧 Parâmetros de Operação")
-        
         c1, c2 = st.columns(2)
+        
         with c1:
             novo_setpoint = st.number_input("Definir Novo Setpoint (m³)", min_value=0.0, max_value=1000.0, value=float(dados["setpoint"]), step=10.0)
             if st.button("ATUALIZAR SETPOINT", use_container_width=True):
-                with open("comando.txt", "w") as f:
-                    f.write(f"SETPOINT={novo_setpoint}")
+                with open("comando.txt", "w") as f: f.write(f"SETPOINT={novo_setpoint}")
                     
         with c2:
             nova_tolerancia = st.number_input("Definir Nova Tolerância (m³)", min_value=1.0, max_value=500.0, value=float(dados["tolerancia"]), step=5.0)
             if st.button("ATUALIZAR TOLERÂNCIA", use_container_width=True):
-                with open("comando.txt", "w") as f:
-                    f.write(f"TOLERANCIA={nova_tolerancia}")
+                with open("comando.txt", "w") as f: f.write(f"TOLERANCIA={nova_tolerancia}")
 
+#Bloco 5: Alarmes e Status de Segurança
 with col_alarm:
     with st.container(border=True):
         st.subheader("🚨 Central de Alarmes")
-        
-        # Layout compacto usando os expansores de status nativos do Streamlit
         c1, c2 = st.columns(2)
+        
         with c1:
             if alarmes["ph"]: st.error("❌ Falha de pH", icon="⚠️")
             else: st.success("✔️ pH Normal")
