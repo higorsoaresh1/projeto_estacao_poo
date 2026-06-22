@@ -35,7 +35,6 @@ int main()
      Reservatorio reservatorio("TK-101", "Area 1", 1000.0, volume_inicial);
 
      Inversor inversor("INV-101", "Area 1");
-
      Bomba bomba("P-101", "Area 1", 20.0, &inversor);
 
      Valvula valvula("XV-101", "Area 1", 15.0);
@@ -51,6 +50,7 @@ int main()
      alarme_vazao alarmeVazao("AH-VZ", "Area 1");
      alarme_turbidez alarmeTurbidez("AH-TB", "Area 1");
      alarme_racionamento alarmeRac("AH-RAC", "Area 1");
+
      Controlador controlador("CTRL-101", 700.0, 80.0, 0.8, 0.03);
      Historico historico("historico_eta.db");
 

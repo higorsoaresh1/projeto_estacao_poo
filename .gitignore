@@ -6,6 +6,7 @@
 *.db-shm
 *.db-wal
 *.jsonl
+*.txt
 build/
 cmake-build-*/
 
