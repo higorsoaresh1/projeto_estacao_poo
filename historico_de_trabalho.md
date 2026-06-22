@@ -10,7 +10,7 @@
 
 07/06/2026 - Continuação do código em c++( Continuação da implementação da malha fechada dentro do sistema de nível do reservatório, junto ao inicio da formação desse processo na main do programa) - (Discord compartilhado, cerca de 1 hora e 40);
 
-08/06/2026 - Separação das classes e da main em arquivos distintos para possibilitar uma melhor organização do código. Além disso, também foi iniciada a construção do JSON dentro da Main - (Discord compartilhado, cerca de 2horas);
+08/06/2026 - Separação das classes e da main em arquivos distintos para possibilitar uma melhor organização do código. Além disso, também foi iniciada a construção do JSON dentro da Main - (Discord compartilhado, cerca de 2 horas);
 
 10/06/2026 - Finalização da construção do JSON dentro da Main, junto com a adaptação desse para uma malha fechada - (Discord compartilhado, cerca de 1 hora e 20 minutos);
 
@@ -25,3 +25,5 @@
 17/06/2026 - Discussão de estrategias de modelagem para melhorar a planta de nível - (Sala de aula, cerca de 1 hora e 30 minutos);
 
 18/06/2026 - Reeconstrução das classes de válvula e válvula de alívio, juntamente a adaptação da malha fechada a essas novas alterações. Criação da classe inversora, além da remodelação das classes de reservatório, controlador e bomba. Além disso, a main e o supervisório foram modificados para suportarem essas alterações e para melhorar as antigas funcionalidades - (Discord compartilhado, cerca de 5 horas);
+
+20-06-2026 - Reesconstrução da malha fechada e construçã o do sistema de consumo externo (Discord compartilhado, cerca de 3 horas e 50 minutos);
