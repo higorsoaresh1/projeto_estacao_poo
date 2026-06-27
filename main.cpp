@@ -153,33 +153,56 @@ int main()
           // Escrita no JSON
           /*Criação da lógica da escrita do JSON LINHA, pois o padrão JSON não permite trabalhar em
           loop infinito, pois nunca fecha a lógica []. O JSON Linha foi criado justamente para cobrir essa parte.*/
+          
+          // Criação de um novo objeto JSONL referente ao ciclo atual
           json << "{";
 
+          // Número do ciclo da simulação
           json << "\"ciclo\":" << ciclo << ",";
+          // Setpoint desejado para o controlador PI
           json << "\"setpoint\":" << controlador.get_setpoint() << ",";
+          // Faixa desejada de tolerância aceitável em torno do setpoint 
           json << "\"tolerancia\":" << controlador.get_tolerancia() << ",";
+          // Vazão efetiva fornecida à rede de distribuição
           json << "\"vazao_saida\":" << valvulaConsumo.get_vazao() << ",";
+          // Demanda externa solicitada pelo sistema consumidor
           json << "\"demanda\":" << consumo_externo_solicitado << ",";
 
+          // Bloco referente ao sensores do ETA
           json << "\"sensores\":{";
+          // Volume atual do reservatório
           json << "\"nivel\":" << sensorNivel.ler_valor() << ",";
+          // Vazão medida na saída da bomba
           json << "\"vazao\":" << sensorVazao.ler_valor() << ",";
+          // Valor atual do pH
           json << "\"ph\":" << sensorPH.ler_valor() << ",";
+          // Valor atual da turbidez
           json << "\"turbidez\":" << sensorTurbidez.ler_valor();
           json << "},";
 
+          // Bloco dos Atuadores do ETA
           json << "\"atuadores\":{";
+          // Frequência aplicada pelo inversor à bomba
           json << "\"frequencia\":" << inversor.get_frequencia() << ",";
+          // Vazão produzida pela bomba
           json << "\"vazao_bomba\":" << bomba.get_vazao() << ",";
+          // Percentual de abertura da válvula de consumo
           json << "\"abertura_consumo\":" << valvulaConsumo.get_abertura() << ",";
+          // Estado da válvula de alívio
           json << "\"valvula_alivio\":" << (valvula.esta_aberta() ? "true" : "false");
           json << "},";
 
+          // Bloco de alarmes do Eta
           json << "\"alarmes\":{";
+          // Alarme PH
           json << "\"ph\":" << (alarmePH.esta_ativo() ? "true" : "false") << ",";
+          // Alarme nivel
           json << "\"nivel\":" << (alarmeNivel.esta_ativo() ? "true" : "false") << ",";
+          // Alarme vazao
           json << "\"vazao\":" << (alarmeVazao.esta_ativo() ? "true" : "false") << ",";
+          // Alarme trubidez
           json << "\"turbidez\":" << (alarmeTurbidez.esta_ativo() ? "true" : "false") << ",";
+          // Alarme indicando regime de racionamento  
           json << "\"racionamento\":" << (alarmeRac.esta_ativo() ? "true" : "false");
           json << "}";
 

@@ -64,6 +64,17 @@ Este projeto simula uma Estação de Tratamento de Água (ETA) utilizando progra
 
 # Padrões de projeto
 
+Os padrões de projeto aplicados nesse sistema foram COMMAND e REPOSITORY. 
+
+1. O padrão de projeto Command, implementado por meio das classes command.hpp, coomand_factory.hpp e das adaptações realizadas na main.cpp, tem como principal objetivo encapsular cada comando de atuação do sistema em uma classe específica, representando cada ação como um objeto independente. Dessa forma, operações como iniciar, parar, alterar o setpoint, modificar a tolerância e encerrar a aplicação passam a ser tratadas de maneira padronizada. 
+
+A principal motivação para a adoção desse padrão foi melhorar a organização da estrutura da main.cpp, que anteriormente concentrava toda a lógica de processamento dos comandos recebidos pelo supervisório. Com a utilização do padrão Command, a responsabilidade pela execução de cada operação foi transferida para classes especializadas, tornando o código mais modular, de fácil manutenção, além de facilita futuras expansões do sistema, permitindo a inclusão de novos comandos sem a necessidade de modificar significativamente a lógica existente na aplicação.
+
+2. O padrão de projeto Repository foi aplicado por intermédio da classe historico.hpp, que atua como uma camada intermediária entre a aplicação e o banco de dados SQLite. Seu principal objetivo é concentrar todas as operações de acesso e registro dos dados, tirando a necessidade dos detalhes de implementação do banco de dados serem conhecidos nas demais classes do sistema. Nesse projeto, a classe historico é responsável por estabelecer a conexão com o banco de dados SQLite, criar automaticamente a tabela de registros quando necessário e armazenar, a cada ciclo da simulação, as informações referentes aos sensores, atuadores e alarmes da ETA. 
+
+O uso desse padrão proporcionou uma melhor separação de responsabilidades, mantendo a lógica de controle de dados isolada da lógica de controle da planta. Além disso, essa abordagem facilita futuras manutenções e expansões do sistema, permitindo, por exemplo, substituir o banco de dados SQLite por outra tecnologia de armazenamento.
+
+
 // Comentar os padrões de projetos utilizados e suas funcionalidades // 
 
 # Controle PI 
@@ -73,6 +84,65 @@ Este projeto simula uma Estação de Tratamento de Água (ETA) utilizando progra
 # Sistema de alarmes
 
 // Fazer uma tabela falando sobre os alarmes e quais são suas condições de funcionamento//
+
+# JSONL
+
+Durante o desenvolvimento do projeto, foi necessária a utilização do formato JSON Lines (JSONL), uma vez que os dados da simulação são gerados continuamente dentro de um laço de execução infinito. O formato JSON tradicional não é adequado para esse cenário, pois exige que o documento seja finalizado corretamente com o fechamento de sua estrutura. Dessa forma, o formato JSONL foi adotado por permitir que cada ciclo da simulação seja registrado como um objeto JSON independente em uma nova linha do arquivo.
+
+Um exemplo de JSONL dentro do sistema:
+
+{
+  "ciclo": 15,
+  "setpoint": 700,
+  "tolerancia": 80,
+  "vazao_saida": 19.5,
+  "demanda": 23.4,
+
+  "sensores": {
+    "nivel": 682.7,
+    "vazao": 20.0,
+    "ph": 7.0,
+    "turbidez": 0.5
+  },
+
+  "atuadores": {
+    "frequencia": 100,
+    "vazao_bomba": 20,
+    "abertura_consumo": 0.78,
+    "valvula_alivio": false
+  },
+
+  "alarmes": {
+    "ph": false,
+    "nivel": false,
+    "vazao": false,
+    "turbidez": false,
+    "racionamento": true
+  }
+}
+
+Onde: 
+
+- Ciclo trata-se do número do ciclo da simulação.
+- Setpoint é o nível desejado do reservatório.
+- Tolerancia é a faixa aceitável em torno do setpoint.
+- Vazao_saida trata-se da vazão efetivamente enviada aos consumidores.
+- Demanda sendo a vazão solicitada pelos consumidores.
+- Sensores.nivel indica o volume atual do reservatório.
+- Sensores.vazao indica a vazão medida na bomba.
+- S.ph indica o valor de pH da água.
+- Sensores.turbidez	indica a turbidez da água.
+- Atuadores.frequencia é a frequência aplicada pelo inversor.
+- Atuadores.vazao_bomba	sendo a vazão fornecida pela bomba.
+- Atuadores.abertura_consumo tratando-se do	percentual de abertura da válvula de consumo.
+- Atuadores.valvula_alivio é o estado da válvula de alívio.
+- Alarmes.ph indica alarme de pH.
+- Alarmes.nivel	indica alarme de nível.
+- Alarmes.vazao	indica alarme de vazão.
+- Alarmes.turbidez indica alarme de turbidez.
+- Alarmes.racionamento indica que o sistema está limitando a vazão por excesso de demanda.
+
+
 
 # Supervisório 
 
