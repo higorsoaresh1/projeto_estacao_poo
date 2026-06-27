@@ -101,7 +101,7 @@ int main()
                {
                     string valor = comando.substr(9);
 
-                    controlador.set_setpoint(stod(valor));
+                    controlador.set_setpoint(stod(valor), sensorNivel.ler_valor());
 
                     cout << "Novo setpoint recebido: " << controlador.get_setpoint() << " m3\n";
 

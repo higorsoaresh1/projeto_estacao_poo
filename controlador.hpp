@@ -28,10 +28,27 @@ public:
     Controlador(string tag_nova, double setpoint_novo, double tolerancia_nova, double kp_novo, double ki_novo)
         : tag(tag_nova), setpoint(setpoint_novo), tolerancia(tolerancia_nova), kp(kp_novo), ki(ki_novo), erro_integral(0) {}
 
-    void set_setpoint(double novo_setpoint)
+    void set_setpoint(double novo_setpoint, double nivel_atual)
     {
+        double erro_antigo = setpoint - nivel_atual;
+        double erro_novo = novo_setpoint - nivel_atual;
+
+        // Se o novo setpoint exigir que o tanque mude drasticamente (ex: erro muito negativo)
+        // nós resetamos a integral para a bomba desligar de fato.
+        if (erro_novo < -50.0)
+        {
+            erro_integral = 0;
+        }
+        else if (ki != 0.0)
+        {
+            erro_integral = erro_integral + (kp * (erro_antigo - erro_novo)) / ki;
+        }
+        else
+        {
+            erro_integral = 0;
+        }
+
         setpoint = novo_setpoint;
-        erro_integral = 0;
     }
 
     double get_setpoint() const

@@ -25,17 +25,25 @@ def renderizar_tanque_animado(nivel_atual, capacidade_maxima=1000.0):
     setpoint_valor = float(dados.get("setpoint", 700.0))
     tolerancia_valor = float(dados.get("tolerancia", 80.0))
     
+    # Definição dos limites operacionais (baseado nas travas do seu CONTROLADOR.hpp)
+    limite_baixo_operacional = 100.0  # Piso mínimo de bloqueio crítico
+    limite_alto_transbordo = 950.0    # Teto máximo para abertura da válvula de alívio
+    
     # Conversão para porcentagens de altura física (0% a 100%)
     pct_fluido = max(0.0, min(100.0, (nivel_atual / capacidade_maxima) * 100))
     pct_sp = max(0.0, min(100.0, (setpoint_valor / capacidade_maxima) * 100))
     pct_tol_sup = max(0.0, min(100.0, ((setpoint_valor + tolerancia_valor) / capacidade_maxima) * 100))
     pct_tol_inf = max(0.0, min(100.0, ((setpoint_valor - tolerancia_valor) / capacidade_maxima) * 100))
+    
+    # Nova conversão para as linhas de limites fixos da ETA
+    pct_lim_baixo = max(0.0, min(100.0, (limite_baixo_operacional / capacidade_maxima) * 100))
+    pct_lim_alto = max(0.0, min(100.0, (limite_alto_transbordo / capacidade_maxima) * 100))
 
     # Cores dinâmicas do fluido (Regra Dupla 80)
-    if pct_fluido <= 20.0: cor_agua = "#ff4b4b"      # Vermelho Crítico
-    elif pct_fluido <= 25.0: cor_agua = "#ffa500"    # Laranja Atenção
-    elif pct_fluido >= 85.0: cor_agua = "#004080"    # Azul Escuro (Transbordo)
-    else: cor_agua = "#4da6ff"                       # Azul Normal
+    if nivel_atual <= limite_baixo_operacional: cor_agua = "#ff4b4b"      # Vermelho Crítico
+    elif pct_fluido <= 25.0: cor_agua = "#ffa500"                         # Laranja Atenção
+    elif nivel_atual >= limite_alto_transbordo: cor_agua = "#004080"      # Azul Escuro (Transbordo)
+    else: cor_agua = "#4da6ff"                                            # Azul Normal
 
     html_conteudo = f"""
     <div style="position: relative; width: 140px; height: 210px; margin: 0 auto; font-family: sans-serif;">
@@ -46,8 +54,11 @@ def renderizar_tanque_animado(nivel_atual, capacidade_maxima=1000.0):
             </div>
 
             <div style="position: absolute; width: 100%; bottom: {pct_sp}%; border-bottom: 2px dashed #1db954; z-index: 4;"><span style="position:absolute; right:1px; background:#1db954; color:white; font-size:7px; padding:0 1px; border-radius:1px; transform:translateY(-50%);">SP</span></div>
-            <div style="position: absolute; width: 100%; bottom: {pct_tol_sup}%; border-bottom: 1px dotted #ff5555; z-index: 4;"><span style="position:absolute; right:1px; background:#ff5555; color:white; font-size:7px; padding:0 1px; border-radius:1px; transform:translateY(-50%);">+TOL</span></div>
-            <div style="position: absolute; width: 100%; bottom: {pct_tol_inf}%; border-bottom: 1px dotted #ff5555; z-index: 4;"><span style="position:absolute; right:1px; background:#ff5555; color:white; font-size:7px; padding:0 1px; border-radius:1px; transform:translateY(-50%);">-TOL</span></div>
+            <div style="position: absolute; width: 100%; bottom: {pct_tol_sup}%; border-bottom: 1px dotted #ffa500; z-index: 4;"><span style="position:absolute; right:1px; background:#ffa500; color:white; font-size:7px; padding:0 1px; border-radius:1px; transform:translateY(-50%);">+TOL</span></div>
+            <div style="position: absolute; width: 100%; bottom: {pct_tol_inf}%; border-bottom: 1px dotted #ffa500; z-index: 4;"><span style="position:absolute; right:1px; background:#ffa500; color:white; font-size:7px; padding:0 1px; border-radius:1px; transform:translateY(-50%);">-TOL</span></div>
+
+            <div style="position: absolute; width: 100%; bottom: {pct_lim_alto}%; border-bottom: 2px solid #ff1a1a; z-index: 4;"><span style="position:absolute; left:1px; background:#ff1a1a; color:white; font-size:7px; padding:0 2px; border-radius:1px; transform:translateY(-50%); font-weight:bold;">MAX ({limite_alto_transbordo:.0f})</span></div>
+            <div style="position: absolute; width: 100%; bottom: {pct_lim_baixo}%; border-bottom: 2px solid #ff1a1a; z-index: 4;"><span style="position:absolute; left:1px; background:#ff1a1a; color:white; font-size:7px; padding:0 2px; border-radius:1px; transform:translateY(-50%); font-weight:bold;">MIN ({limite_baixo_operacional:.0f})</span></div>
 
             <div style="width: 100%; height: {pct_fluido}%; background: {cor_agua}; transition: height 0.5s ease-out; z-index: 3;"></div>
         </div>
@@ -185,12 +196,37 @@ with col_param:
         c1, c2 = st.columns(2)
         
         with c1:
-            novo_setpoint = st.number_input("Definir Novo Setpoint (m³)", min_value=0.0, max_value=1000.0, value=float(dados["setpoint"]), step=10.0)
+            # 1. O operador escolhe o Setpoint dentro da faixa segura
+            novo_setpoint = st.number_input(
+                "Definir Novo Setpoint (m³)", 
+                min_value=150.0, 
+                max_value=900.0, 
+                value=float(dados["setpoint"]), 
+                step=10.0
+            )
             if st.button("ATUALIZAR SETPOINT", use_container_width=True):
                 with open("comando.txt", "w") as f: f.write(f"SETPOINT={novo_setpoint}")
                     
         with c2:
-            nova_tolerancia = st.number_input("Definir Nova Tolerância (m³)", min_value=1.0, max_value=500.0, value=float(dados["tolerancia"]), step=5.0)
+            # 2. LÓGICA DE TRAVA DA TOLERÂNCIA:
+            # Se o Setpoint estiver nos extremos (perto de 150 ou de 900), o teto da tolerância vira 50.
+            # Caso contrário, permite até 100 (ou o valor que preferir para o meio do tanque).
+            if novo_setpoint <= 150.0 or novo_setpoint >= 900.0:
+                tolerancia_maxima = 50.0
+            else:
+                tolerancia_maxima = 100.0  # Limite padrão seguro para o resto do tanque
+
+            # Se a tolerância atual gravada for maior que o novo teto, ajustamos o padrão para não dar erro
+            valor_padrao_tol = min(float(dados["tolerancia"]), tolerancia_maxima)
+
+            nova_tolerancia = st.number_input(
+                "Definir Nova Tolerância (m³)", 
+                min_value=1.0, 
+                max_value=tolerancia_maxima, # O teto agora é dinâmico!
+                value=valor_padrao_tol, 
+                step=5.0,
+                help=f"Para o setpoint atual, a tolerância máxima permitida é {tolerancia_maxima} m³."
+            )
             if st.button("ATUALIZAR TOLERÂNCIA", use_container_width=True):
                 with open("comando.txt", "w") as f: f.write(f"TOLERANCIA={nova_tolerancia}")
 
