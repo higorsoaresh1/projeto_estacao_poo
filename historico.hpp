@@ -35,6 +35,7 @@ public:
         string sql =
             "CREATE TABLE IF NOT EXISTS historico ("
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "timestamp TEXT,"
             "ciclo INTEGER,"
             "nivel REAL,"
             "vazao REAL,"
@@ -59,15 +60,27 @@ public:
         }
     }
 
-    void registrar(int ciclo, double nivel, double vazao, double ph, double turbidez, double consumo, bool bomba,
+    void registrar(string timestamp, int ciclo, double nivel, double vazao, double ph, double turbidez, double consumo, bool bomba,
                    bool valvula, bool alarme_ph, bool alarme_nivel, bool alarme_vazao, bool alarme_turbidez, bool alarme_rac)
     { /*Registro dos dados no banco de dados*/
         string sql = "INSERT INTO historico "
-                     "(ciclo,nivel,vazao,ph,turbidez,consumo,"
-                     "bomba,valvula,alarme_ph,alarme_nivel,"
-                     "alarme_vazao,alarme_turbidez) VALUES (" +
-                     to_string(ciclo) + "," + to_string(nivel) + "," + to_string(vazao) + "," + to_string(ph) + "," + to_string(turbidez) + "," + to_string(consumo) + "," + to_string(bomba) + "," + to_string(valvula) + "," + to_string(alarme_ph) + "," + to_string(alarme_nivel) + "," + to_string(alarme_vazao) + "," + to_string(alarme_turbidez) + ");";
-
+             "(timestamp,ciclo,nivel,vazao,ph,turbidez,consumo,"
+             "bomba,valvula,alarme_ph,alarme_nivel,"
+             "alarme_vazao,alarme_turbidez) VALUES ('" +
+             timestamp + "'," +
+             to_string(ciclo) + "," +
+             to_string(nivel) + "," +
+             to_string(vazao) + "," +
+             to_string(ph) + "," +
+             to_string(turbidez) + "," +
+             to_string(consumo) + "," +
+             to_string(bomba) + "," +
+             to_string(valvula) + "," +
+             to_string(alarme_ph) + "," +
+             to_string(alarme_nivel) + "," +
+             to_string(alarme_vazao) + "," +
+             to_string(alarme_turbidez) +
+             ");";
         char *erro = nullptr;
         /*Verificação de erro*/
         if (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &erro) != SQLITE_OK)

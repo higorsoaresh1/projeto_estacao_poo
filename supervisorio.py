@@ -93,6 +93,16 @@ sensores = dados["sensores"]
 atuadores = dados["atuadores"]
 alarmes = dados["alarmes"]
 
+# TimeStamp
+col1, col2 = st.columns(2)
+
+with col1:
+    st.metric("Última Atualização", dados["timestamp"])
+
+with col2:
+    st.metric("Ciclo Atual", dados["ciclo"])
+
+
 # Alertas de Segurança no Topo
 if alarmes.get("racionamento", False):
     st.error("🚨 **SISTEMA EM REGIME DE URGÊNCIA:** Racionamento ativo por sobrecarga de demanda!", icon="⚠️")

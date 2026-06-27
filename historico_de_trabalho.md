@@ -33,3 +33,7 @@
 27-06-2026 - Construção do arquivo README de forma organizada;
 
 27-06-2026 - Aplicação do padrão de projeto Command, juntamente com a criação das classes command.hpp e command_factory.hpp;
+
+27-06-2026 - Construção do JSON comentado na main.cpp e no README.md
+
+27-06-2026 - Criação do TimeStamp

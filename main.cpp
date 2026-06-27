@@ -7,7 +7,8 @@
 #include <fstream>
 #include <thread>
 #include <chrono>
-
+#include <iomanip>
+#include <sstream>
 /*Desenvolvido por: Guilherme Parreira e Higor Soares.*/
 
 #include "CONTROLADOR.hpp"
@@ -146,8 +147,20 @@ int main()
           // Monitoramento avaliando diretamente o consumo solicitado
           controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazao, &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez, &alarmeRac, consumo_externo_solicitado);
 
+          // Criação do TimeStamp para a o processo de registrar no histórico
+          
+          time_t agora = time(nullptr);
+
+          tm *tempo_local = localtime(&agora);
+
+          stringstream ss;
+
+          ss << put_time(tempo_local, "%Y-%m-%d %H:%M:%S");
+
+          string timestamp = ss.str();
+          
           // Registro atualizado incluindo o alarme de racionamento no banco de dados SQLite
-          historico.registrar(ciclo, sensorNivel.ler_valor(), sensorVazao.ler_valor(), sensorPH.ler_valor(), sensorTurbidez.ler_valor(), valvulaConsumo.get_abertura(),
+          historico.registrar(timestamp, ciclo, sensorNivel.ler_valor(), sensorVazao.ler_valor(), sensorPH.ler_valor(), sensorTurbidez.ler_valor(), valvulaConsumo.get_abertura(),
                               bomba.esta_operando(), valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(), alarmeTurbidez.esta_ativo(), alarmeRac.esta_ativo());
 
           // Escrita no JSON
@@ -159,6 +172,8 @@ int main()
 
           // Número do ciclo da simulação
           json << "\"ciclo\":" << ciclo << ",";
+          // TimeStamp referente a quando o ciclo aconteceu
+          json << "\"timestamp\":\"" << timestamp << "\",";
           // Setpoint desejado para o controlador PI
           json << "\"setpoint\":" << controlador.get_setpoint() << ",";
           // Faixa desejada de tolerância aceitável em torno do setpoint 
