@@ -1,5 +1,4 @@
-# projeto_estacao_poo
-Criação do projeto.
+# ID_dupla = 80( 24 + 56)
 
 # Sistema Supervisório para Estação de Tratamento de Água (ETA)
 
@@ -63,6 +62,10 @@ Este projeto simula uma Estação de Tratamento de Água (ETA) utilizando progra
 - JSON Lines
 - Mermaid UML
 
+# Padrões de projeto
+
+// Comentar os padrões de projetos utilizados e suas funcionalidades // 
+
 # Controle PI 
 
 // Explicar melhor o funcionamento de dados como setpoint, erro, tolerância, ganho integral, etc... //
@@ -78,6 +81,10 @@ Este projeto simula uma Estação de Tratamento de Água (ETA) utilizando progra
 # Banco de Dados
 
 // Explicar a tabela do banco de dados//
+
+# Comandos de atuação 
+
+// Citar os comandos de atuação que existem no projeto //
 
 # Como executar o programa
 
