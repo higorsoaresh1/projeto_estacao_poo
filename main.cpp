@@ -14,6 +14,8 @@
 #include "HISTORICO.hpp"
 #include "ETA.hpp"
 #include "VALVULA_CONSUMO.hpp"
+#include "COMMAND.hpp"
+#include "COMMAND_FACTORY.hpp"
 
 using namespace std;
 
@@ -74,64 +76,39 @@ int main()
      {
           ifstream arquivo_comando("comando.txt");
 
-          string comando;
+if (arquivo_comando.is_open())
+{
+    string texto_comando;
 
-          if (arquivo_comando.is_open())
-          {
-               getline(arquivo_comando, comando);
-               arquivo_comando.close();
+    getline(arquivo_comando, texto_comando);
 
-               if (comando == "STOP")
-               {
-                    eta.parar_tratamento();
+    arquivo_comando.close();
 
-                    ofstream limpar("comando.txt");
-                    limpar << "";
-                    limpar.close();
-               }
-               else if (comando == "START")
-               {
-                    eta.iniciar_tratamento();
+    if (!texto_comando.empty())
+    {
+        auto comando = CommandFactory::criarComando(
+            texto_comando,
+            &controlador,
+            &eta,
+            &sensorNivel);
 
-                    ofstream limpar("comando.txt");
-                    limpar << "";
-                    limpar.close();
-               }
-               else if (comando.find("SETPOINT=") == 0)
-               {
-                    string valor = comando.substr(9);
+        if (comando)
+        {
+            comando->executar();
 
-                    controlador.set_setpoint(stod(valor), sensorNivel.ler_valor());
+            // Limpa o arquivo
+            ofstream limpar("comando.txt");
+            limpar.close();
 
-                    cout << "Novo setpoint recebido: " << controlador.get_setpoint() << " m3\n";
-
-                    ofstream limpar("comando.txt");
-                    limpar << "";
-                    limpar.close();
-               }
-               else if (comando.find("TOLERANCIA=") == 0)
-               {
-                    string valor = comando.substr(11);
-
-                    controlador.set_tolerancia(stod(valor));
-
-                    cout << "Nova tolerancia recebida: " << controlador.get_tolerancia() << " m3\n";
-
-                    ofstream limpar("comando.txt");
-                    limpar << "";
-                    limpar.close();
-               }
-               else if (comando == "EXIT")
-               {
-                    cout << "Encerrando sistema..." << endl;
-
-                    ofstream limpar("comando.txt");
-                    limpar << "";
-                    limpar.close();
-
-                    break;
-               }
-          }
+            // Se o comando executado foi EXIT,
+            // encerra o programa.
+            if (dynamic_cast<ExitCommand *>(comando.get()) != nullptr)
+            {
+                break;
+            }
+        }
+    }
+}
 
           if (!eta.esta_operando())
           {

@@ -92,8 +92,7 @@ Este projeto simula uma Estação de Tratamento de Água (ETA) utilizando progra
 
 2. Após isso, nesse mesmo terminal, utilize o seguinte comando: ./eta
 
-3. Depois de executar o código c++, abra um novo terminal e aplique o seguinte comando para abrir o supervisório StreamLit: streamlit run supervisorio.py
-
+3. Depois de executar o código c++, abra um novo terminal e aplique o seguinte comando para abrir o supervisório StreamLit: python -m streamlit run supervisorio.py
 4. Após todas essas aplicações, o sistema deve rodar sem nenhum problema.
 
 # UML 
