@@ -27,3 +27,9 @@
 18/06/2026 - Reeconstrução das classes de válvula e válvula de alívio, juntamente a adaptação da malha fechada a essas novas alterações. Criação da classe inversora, além da remodelação das classes de reservatório, controlador e bomba. Além disso, a main e o supervisório foram modificados para suportarem essas alterações e para melhorar as antigas funcionalidades - (Discord compartilhado, cerca de 5 horas);
 
 20-06-2026 - Reesconstrução da malha fechada e construçã o do sistema de consumo externo (Discord compartilhado, cerca de 3 horas e 50 minutos);
+
+// Colocar o resto até o dia 27//
+
+27-06-2026 - Construção do arquivo README de forma organizada;
+
+27-06-2026 - Aplicação do padrão de projeto Command, juntamente com a criação das classes command.hpp e command_factory.hpp;

@@ -76,39 +76,34 @@ int main()
      {
           ifstream arquivo_comando("comando.txt");
 
-if (arquivo_comando.is_open())
-{
-    string texto_comando;
+          if (arquivo_comando.is_open()){
+               
+               string texto_comando;
 
-    getline(arquivo_comando, texto_comando);
+               getline(arquivo_comando, texto_comando);
 
-    arquivo_comando.close();
+               arquivo_comando.close();
 
-    if (!texto_comando.empty())
-    {
-        auto comando = CommandFactory::criarComando(
-            texto_comando,
-            &controlador,
-            &eta,
-            &sensorNivel);
+          if (!texto_comando.empty()){
+        
+            auto comando = CommandFactory::criarComando(texto_comando, &controlador, &eta, &sensorNivel);
 
-        if (comando)
-        {
-            comando->executar();
+               if (comando){
+            
+                    comando->executar();
 
-            // Limpa o arquivo
-            ofstream limpar("comando.txt");
-            limpar.close();
+                    // Limpa o arquivo
+                    ofstream limpar("comando.txt");
+                    limpar.close();
 
-            // Se o comando executado foi EXIT,
-            // encerra o programa.
-            if (dynamic_cast<ExitCommand *>(comando.get()) != nullptr)
-            {
-                break;
-            }
-        }
-    }
-}
+                    // Se o comando executado foi EXIT,
+                    // encerra o programa.
+                    if (dynamic_cast<ExitCommand *>(comando.get()) != nullptr){
+                    break;
+                    }
+               } 
+          }
+     }
 
           if (!eta.esta_operando())
           {
