@@ -56,7 +56,7 @@ int main()
      alarme_turbidez alarmeTurbidez("AH-TB", "Area 1");
      alarme_racionamento alarmeRac("AH-RAC", "Area 1");
 
-     Controlador controlador("CTRL-101", 700.0, 80.0, 0.8, 0.03); // Substituir 80 pelo ID_DUPLA e também o setpoint para 620 + ID_DUPLA
+     Controlador controlador("CTRL-101", (620 + ID_DUPLA), ID_DUPLA, 0.8, 0.03); // Substituir 80 pelo ID_DUPLA e também o setpoint para 620 + ID_DUPLA
      Historico historico("historico_eta.db");
 
      double consumo_externo_solicitado = 5.0 + ((double)rand() / RAND_MAX) * 20.0;
@@ -144,7 +144,7 @@ int main()
                sensorPH.ativar_falha();
           }
 
-          if(ciclo == 25){
+          if(ciclo == 25){ // Colocar um botão no supervisório para reparar falha
                cout << "\n==========================\n";
                cout << " A FALHA FOI REPARADA" << endl;
                cout << "Sensor de pH voltou a ter comunicação." << endl;
