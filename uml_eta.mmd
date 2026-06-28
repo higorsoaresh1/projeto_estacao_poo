@@ -5,91 +5,190 @@ config:
 ---
 classDiagram
 direction TB
-    class ETA {
-      -localizacao: string
-      -operando: bool
-      +iniciar_tratamento()
-      +parar_sistema()
-    }
 
     class Controlador {
-      -tag: string
-      -setpoint: double
-      +ajustar_bomba()
-      +acionar_alarme()
-      +acessar_historico()
-      +consultar_sensor()
-      +ajustar_sensor()
+        -tag: string
+        -setpoint: double
+        -tolerancia: double
+        -kp: double
+        -ki: double
+        -erro_integral: double
+        +Controlador()
+        +set_setpoint() void
+        +get_setpoint() const double
+        +get_tolerancia() const double
+        +set_tolerancia() void
+        +controlar_nivel() void
+        +monitorar() void
     }
 
-    class Tanque {
-      
+    class Reservatorio {
+        -tag: string
+        -area: string
+        -volume_maximo: double
+        -volume_atual: double
+        +Reservatorio()
+        +get_volume_atual() const double
+        +encher_reservatorio() void
+        +esvaziar_reservatorio() void
+        +atualizar_volume() void
     }
 
-    class Sensor {
-      <<abstract>>
-      -tag: string
-      -valor_lido: float
-      -area: string
-      +calibrar()
-      +ajustar_faixa()
-      +retornar_valor()
+    class Inversor {
+        -tag: string
+        -area: string
+        -frequencia: double
+        +Inversor()
+        +set_frequencia() void
+        +get_frequencia() const double
     }
 
     class Bomba {
-      -tag: string
-      -area: string
-      -bool: ativo
-      +ligar()
-      +desligar()
+        -tag: string
+        -area: string
+        -vazao_maxima: double
+        -operando: bool
+        -inversor: Inversor*
+        +Bomba()
+        +ligar() void
+        +desligar() void
+        +get_vazao() const double
+        +esta_operando() const bool
+    }
+
+    class Valvula {
+        -tag: string
+        -area: string
+        -vazao_alivio: double
+        -aberta: bool
+        +Valvula()
+        +abrir() void
+        +fechar() void
+        +esta_aberta() const bool
+        +get_vazao_alivio() const double
+    }
+
+    class ValvulaConsumo {
+        -tag: string
+        -area: string
+        -abertura: double
+        -vazao_maxima: double
+        +ValvulaConsumo()
+        +set_abertura() void
+        +get_abertura() const double
+        +get_vazao() double
+    }
+
+    class Historico {
+        -db: sqlite3*
+        +Historico()
+        +criar_tabela() void
+        +registrar() void
+    }
+
+    class Sensor {
+        <<abstract>>
+        #tag: string
+        #area: string
+        #valor_lido: double
+        #valor_minimo: double
+        #valor_maximo: double
+        +Sensor()
+        +ler_valor() virtual double
+        +get_valor_minimo() const double
+        +get_valor_maximo() const double
+    }
+
+    class sensor_ph {
+        -falha_comunicacao: bool
+        +sensor_ph()
+        +ativar_falha() void
+        +reparar_falha() void
+        +possui_falha() const bool
+        +ler_valor() override double
+    }
+
+    class sensor_turbidez {
+        +sensor_turbidez()
+        +ler_valor() override double
+    }
+
+    class sensor_nivel {
+        -reservatorio: Reservatorio*
+        +sensor_nivel()
+        +ler_valor() override double
+    }
+
+    class sensor_vazao {
+        -bomba: Bomba*
+        -valvula: ValvulaConsumo*
+        +sensor_vazao()
+        +ler_valor() override double
     }
 
     class Alarme {
-      -tag: string
-      -area: string
-      +disparar()
-      +silenciar()
+        #tag: string
+        #area: string
+        #ativo: bool
+        +Alarme()
+        +disparar() virtual void
+        +silenciar() virtual void
+        +esta_ativo() virtual bool
     }
 
-    class Histórico {
-      -registros: List<Leitura>
-      +exibir_historico()
-      +adicionar_registro()
+    class alarme_ph {
+        +disparar() override void
+        +silenciar() override void
+        +esta_ativo() override bool
     }
 
-    class `Reservatório` {
-      #capacidade_max
+    class alarme_nivel {
+        +disparar() override void
+        +silenciar() override void
+        +esta_ativo() override bool
     }
 
-    class `Sensor_Nível` {
-      -nivel_minimo
-      -nivel_maximo
+    class alarme_vazao {
+        +disparar() override void
+        +silenciar() override void
+        +esta_ativo() override bool
     }
 
-    class Sensor_pH {
-      -pH_minimo
-      -pH_maximo
+    class alarme_turbidez {
+        +disparar() override void
+        +silenciar() override void
+        +esta_ativo() override bool
     }
 
-    class Sensor_Turbidez {
-      -turbidez_minima
-      -turbidez_maxima
+    class alarme_racionamento {
+        +disparar() override void
+        +silenciar() override void
+        +esta_ativo() override bool
     }
 
-    class Sensor_Vazao {
-      -vazao_minima
-      -vazao_maxima
-    }
+    %% Heranças
+    Sensor <|-- sensor_ph
+    Sensor <|-- sensor_turbidez
+    Sensor <|-- sensor_nivel
+    Sensor <|-- sensor_vazao
 
-    `Reservatório`  <--  Tanque
-    Sensor <|-- `Sensor_Nível`
-    Sensor <|-- Sensor_pH
-    Sensor <|-- Sensor_Turbidez
-    Sensor <|-- Sensor_Vazao
-    ETA *-- Controlador
-    ETA *-- `Reservatório`
-    `Reservatório` "1" *-- "*" Sensor
-    Controlador "1" --> "4" Sensor
-    Controlador "1" --> "2" Bomba
-    Controlador "1" --> "4" Alarme
-    Controlador --> `Histórico`
+    Alarme <|-- alarme_ph
+    Alarme <|-- alarme_nivel
+    Alarme <|-- alarme_vazao
+    Alarme <|-- alarme_turbidez
+    Alarme <|-- alarme_racionamento
+
+    %% Associações de Hardware
+    Bomba "1" *--> "1" Inversor : possui
+    sensor_nivel "1" --> "1" Reservatorio : monitora volume
+    sensor_vazao "1" --> "1" Bomba : monitora entrada
+    sensor_vazao "1" --> "1" ValvulaConsumo : monitora saída
+    sensor_ph "1" --> "1" Reservatorio : monitora qualidade
+    sensor_turbidez "1" --> "1" Reservatorio : monitora qualidade
+    
+    %% Associações de Controle
+    Controlador "1" --> "1" Inversor : define frequência (PI)
+    Controlador "1" --> "1" Valvula : atua (alívio)
+    Controlador ..> Sensor : lê valores para controle
+    Controlador ..> Alarme : monitora e dispara
+    Controlador ..> Historico : fornece dados para registro
