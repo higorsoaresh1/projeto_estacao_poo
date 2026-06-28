@@ -327,3 +327,23 @@ Alterações do sistema por meio do ID_DUPLA:
 27-06-2026- Atualização do README, aplicação dos padrões de projeto Commannd e Factory, ID DUPLA, correção de problemas relacionados ao nível por meio da implementação da lógica Anti-Windup, atualização do banco de dados e criação de falha simulada, além de diversas melhorias no código (Discord, cerca de 7 horas);
 
 28-06-2026 - 
+
+# Checklist de entrega do projeto
+
+- [x] Pelo menos 4 tipos de sensores.
+- [x] Pelo menos 2 bombas ou 1 bomba com 1 atuador auxiliar.
+- [x] Pelo menos 4 regras de controle.
+- [x] Pelo menos 4 comandos de atuação.
+- [x] Pelo menos 3 tipos de alarme.
+- [x] Falha simulada específica da dupla.
+- [x] Assinatura operacional documentada.
+- [x] Contrato JSON documentado.
+- [x] Herança, polimorfismo e encapsulamento evidentes.
+- [x] Pelo menos 2 padrões de projeto.
+- [x] Supervisor Streamlit funcional.
+- [x] Histórico em CSV ou SQLite.
+- [x] README atualizado.
+- [x] AI_LOG preenchido.
+- [ ] Testes executáveis.
+- [ ] Issues, commits ou pull requests mostram participação dos dois integrantes.
+- [ ] Apresentação técnica preparada.
