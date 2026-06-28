@@ -110,6 +110,11 @@ if alarmes.get("racionamento", False):
 if alarmes.get("nivel", False):
     st.warning("🚨 **ALERTA DE NÍVEL CRÍTICO:** Verificar o nível do reservatório!", icon="⚠️")
 
+if sensores.get("ph") == -0.8:
+    st.error("🚨 **CRÍTICO:** Link de comunicação Modbus com o sensor PH-101 foi interrompido! Sistema operando às cegas.", icon="🔌")
+elif alarmes.get("ph", False):
+    st.warning("⚠️ **ALERTA DE PROCESSO:** O valor do pH está fora da faixa segura de operação!", icon="🧪")
+
 # Interface Gráfica (Painel de Controle)
 
 # Bloco 1: Monitoramento Principal (Sensores)
@@ -124,7 +129,7 @@ with st.container(border=True):
         c_linha1_1, c_linha1_2, c_linha1_3 = st.columns(3)
         c_linha1_1.metric("Nível", f"{sensores['nivel']:.1f} m³")
         c_linha1_2.metric("Vazão de Entrada", f"{atuadores['vazao_bomba']:.1f} m³/ciclo")
-        c_linha1_3.metric("Vazão de Saída", f"{dados['vazao_saida']:.1f} m³/ciclo")
+        c_linha1_3.metric("Vazão de Saída", f"{sensores['vazao_saida']:.1f} m³/ciclo")
         
         st.markdown("---")
         
@@ -182,18 +187,76 @@ with col_at:
 
 # Bloco 3: Gráfico de Tendência
 with st.container(border=True):
-    st.subheader("📈 Tendência do Nível")
+    st.subheader("📈 Tendência de Processo")
     try:
         conexao = sqlite3.connect("historico_eta.db", check_same_thread=False)
-        df = pd.read_sql_query("SELECT ciclo, nivel FROM historico ORDER BY ciclo DESC LIMIT 100", conexao)
+        df = pd.read_sql_query("SELECT ciclo, nivel, setpoint, tolerancia, vazao_entrada, vazao_saida FROM historico ORDER BY ciclo DESC LIMIT 100", conexao)
         conexao.close()
 
         if not df.empty:
             df = df.sort_values("ciclo")
+            
             c_info1, c_info2 = st.columns(2)
             c_info1.caption(f"**Pontos em tela:** {len(df)}")
             c_info2.caption(f"**Último Ciclo:** {df['ciclo'].max()}")
-            st.line_chart(df.set_index("ciclo")["nivel"], height=250)
+            
+            # --- MEMÓRIA ANTI-RESET DA SELEÇÃO DE TELA ---
+            # Se a variável não existir na sessão, define a primeira tela como padrão
+            if "tela_ativa" not in st.session_state:
+                st.session_state["tela_ativa"] = "Nível do Reservatório"
+
+            opcoes_tela = ["Nível do Reservatório", "Balanço de Vazões"]
+            
+            # Criamos um seletor em formato de botões horizontais imitando as abas
+            tela_selecionada = st.radio(
+                "Visualizar Gráfico:", 
+                opcoes_tela, 
+                index=opcoes_tela.index(st.session_state["tela_ativa"]),
+                horizontal=True,
+                key="seletor_grafico_fixo"
+            )
+            # Salvamos a escolha atual na memória do Streamlit
+            st.session_state["tela_ativa"] = tela_selecionada
+            
+            st.markdown("---")
+            
+            # --- RENDERIZAÇÃO BASEADA NA MEMÓRIA ---
+            if tela_selecionada == "Nível do Reservatório":
+                import altair as alt
+                
+                # Pegamos o valor do último setpoint para destacar na escala lateral
+                ultimo_sp = float(df["setpoint"].iloc[-1])
+
+                # Configuração da linha do nível com o seu destaque no eixo Y
+                grafico_nivel = alt.Chart(df).mark_line(color="#4da6ff", strokeWidth=2.5).encode(
+                    x=alt.X("ciclo:Q", title="Ciclo"),
+                    y=alt.Y(
+                        "nivel:Q", 
+                        title="Nível (m³)", 
+                        scale=alt.Scale(domain=[0, 1000]),
+                        axis=alt.Axis(
+                            values=[0, 200, 400, 600, 800, 1000, ultimo_sp], 
+                            labelColor=alt.condition(
+                                f"datum.value == {ultimo_sp}", 
+                                alt.value("#1db954"), 
+                                alt.value("#777777")  
+                            ),
+                            labelFontWeight=alt.condition(
+                                f"datum.value == {ultimo_sp}", 
+                                alt.value("bold"),    
+                                alt.value("normal")
+                            )
+                        )
+                    ),
+                    tooltip=["ciclo", "nivel"]
+                ).properties(height=250)
+
+                st.altair_chart(grafico_nivel, use_container_width=True)
+                
+            elif tela_selecionada == "Balanço de Vazões":
+                # Plota ambas as vazões juntas para comparação visual
+                st.line_chart(df.set_index("ciclo")[["vazao_entrada", "vazao_saida"]], height=250)
+                
     except Exception as e:
         st.info(f"Banco ainda não disponível: {e}")
 
@@ -247,8 +310,12 @@ with col_alarm:
         c1, c2 = st.columns(2)
         
         with c1:
-            if alarmes["ph"]: st.error("❌ Falha de pH", icon="⚠️")
-            else: st.success("✔️ pH Normal")
+            if sensores['ph'] == -0.8:
+                st.error("🔌 Link PH-101 Offline (Queda de Conexão)", icon="🚨")
+            elif alarmes["ph"]:
+                st.error("❌ Falha de pH (Fora da Faixa)", icon="⚠️")
+            else:
+                st.success("✔️ pH Normal")
             
             if alarmes["nivel"]: st.error("❌ Falha de Nível", icon="⚠️")
             else: st.success("✔️ Nível Normal")
@@ -268,12 +335,25 @@ with col_alarm:
 
 # Menu Lateral (Configurações do Sistema)
 st.sidebar.header("Comandos do Sistema")
-if st.sidebar.button("▶ START SYSTEM", use_container_width=True, type="primary"):
+if st.sidebar.button("▶ INICIAR SISTEMA", use_container_width=True, type="primary"):
     with open("comando.txt", "w") as f: f.write("START")
 
-if st.sidebar.button("⏹ STOP SYSTEM", use_container_width=True):
+if st.sidebar.button("⏹ PARAR SISTEMA", use_container_width=True):
     with open("comando.txt", "w") as f: f.write("STOP")
 
 st.sidebar.markdown("---")
-if st.sidebar.button("❌ EXIT APPLICATION", use_container_width=True):
+if st.sidebar.button("❌ FECHAR DISPOSITIVO", use_container_width=True):
     with open("comando.txt", "w") as f: f.write("EXIT")
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("🛠️ Injeção de Falhas (Mesa de Testes)")
+
+# Botão para provocar a falha de conexão
+if st.sidebar.button("🚨 SIMULAR QUEDA DE CONEXÃO PH", use_container_width=True, type="secondary"):
+    with open("comando.txt", "w") as f: 
+        f.write("FALHA_CONEXAO_PH")
+
+# Botão para reparar a falha
+if st.sidebar.button("🔧 REPARAR SENSOR PH", use_container_width=True, type="primary"):
+    with open("comando.txt", "w") as f: 
+        f.write("REPARAR_PH")

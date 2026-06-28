@@ -78,7 +78,7 @@ public:
         {
             cout << "ERRO: Sensor sem comunicacao!" << endl;
 
-            return -1;
+            return (double)ID_DUPLA / (-100.0);
         }
 
         return valor_lido;

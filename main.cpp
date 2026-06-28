@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <sstream>
 /*Desenvolvido por: Guilherme Parreira e Higor Soares.*/
+const int ID_DUPLA = 80; // ID próprio da Dupla (24 + 56)
 
 #include "CONTROLADOR.hpp"
 #include "HISTORICO.hpp"
@@ -19,8 +20,6 @@
 #include "COMMAND_FACTORY.hpp"
 
 using namespace std;
-
-const int ID_DUPLA = 80; // ID próprio da Dupla (24 + 56)
 
 int main()
 {
@@ -46,7 +45,7 @@ int main()
      ValvulaConsumo valvulaConsumo("XV-CONS", "Area 1", 1.0, 25.0);
 
      sensor_nivel sensorNivel("LT-101", "Area 1", 0.0, 150.0, 1000.0, &reservatorio);
-     sensor_vazao sensorVazao("FT-101", "Area 1", 0.0, 25.0, &bomba);
+     sensor_vazao sensorVazaoEntrada("FT-101", "Area 1", 0.0, 25.0, &bomba);
      sensor_vazao sensorVazaoSaida("FT-102", "Area 1", 0.0, 25.0, &valvulaConsumo);
      sensor_ph sensorPH("PH-101", "Area 1", 7.0, 6.0, 8.0);
      sensor_turbidez sensorTurbidez("TB-101", "Area 1", 0.5, 0.0, 1.0);
@@ -57,7 +56,7 @@ int main()
      alarme_turbidez alarmeTurbidez("AH-TB", "Area 1");
      alarme_racionamento alarmeRac("AH-RAC", "Area 1");
 
-     Controlador controlador("CTRL-101", (620 + ID_DUPLA), ID_DUPLA, 0.8, 0.03); // Substituir 80 pelo ID_DUPLA e também o setpoint para 620 + ID_DUPLA
+     Controlador controlador("CTRL-101", (620 + ID_DUPLA), ID_DUPLA, (ID_DUPLA / 100), 0.03);
      Historico historico("historico_eta.db");
 
      double consumo_externo_solicitado = 5.0 + ((double)rand() / RAND_MAX) * 20.0;
@@ -93,8 +92,7 @@ int main()
 
                if (!texto_comando.empty())
                {
-
-                    auto comando = CommandFactory::criarComando(texto_comando, &controlador, &eta, &sensorNivel);
+                    auto comando = CommandFactory::criarComando(texto_comando, &controlador, &eta, &sensorNivel, &sensorPH, &alarmePH);
 
                     if (comando)
                     {
@@ -140,26 +138,6 @@ int main()
           // Controle em malha fechada
           controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula, &inversor, &valvulaConsumo, consumo_externo_solicitado);
 
-          // Verificação e execução da falha simulada no sensor de PH
-          if (ciclo == 20)
-          {
-               cout << "\n=====================================\n";
-               cout << "FALHA SIMULADA" << endl;
-               cout << "Sensor de pH perdeu comunicação." << endl;
-               cout << "=====================================\n";
-
-               sensorPH.ativar_falha();
-          }
-
-          if (ciclo == 25)
-          { // Colocar um botão no supervisório para reparar falha
-               cout << "\n==========================\n";
-               cout << " A FALHA FOI REPARADA" << endl;
-               cout << "Sensor de pH voltou a ter comunicação." << endl;
-
-               sensorPH.reparar_falha();
-          }
-
           if (abs(nivel_atual - controlador.get_setpoint()) <= controlador.get_tolerancia())
           {
                ciclos_estavel++;
@@ -170,7 +148,7 @@ int main()
           }
 
           // Monitoramento avaliando diretamente o consumo solicitado
-          controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazao, &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez, &alarmeRac, consumo_externo_solicitado);
+          controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazaoEntrada, &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez, &alarmeRac, consumo_externo_solicitado);
 
           // Criação do TimeStamp para a o processo de registrar no histórico
 
@@ -185,7 +163,7 @@ int main()
           string timestamp = ss.str();
 
           // Registro atualizado incluindo o alarme de racionamento no banco de dados SQLite
-          historico.registrar(timestamp, ciclo, nivel_atual, sensorVazao.ler_valor(), sensorVazaoSaida.ler_valor(), sensorPH.ler_valor(), controlador.get_setpoint(),
+          historico.registrar(timestamp, ciclo, nivel_atual, sensorVazaoEntrada.ler_valor(), sensorVazaoSaida.ler_valor(), sensorPH.ler_valor(), controlador.get_setpoint(),
                               controlador.get_tolerancia(), consumo_externo_solicitado, sensorTurbidez.ler_valor(), valvulaConsumo.get_abertura(), bomba.esta_operando(),
                               valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(), alarmeTurbidez.esta_ativo(),
                               alarmeRac.esta_ativo());
@@ -205,8 +183,6 @@ int main()
           json << "\"setpoint\":" << controlador.get_setpoint() << ",";
           // Faixa desejada de tolerância aceitável em torno do setpoint
           json << "\"tolerancia\":" << controlador.get_tolerancia() << ",";
-          // Vazão efetiva fornecida à rede de distribuição
-          json << "\"vazao_saida\":" << sensorVazaoSaida.ler_valor() << ",";
           // Demanda externa solicitada pelo sistema consumidor
           json << "\"demanda\":" << consumo_externo_solicitado << ",";
 
@@ -215,7 +191,9 @@ int main()
           // Volume atual do reservatório
           json << "\"nivel\":" << nivel_atual << ",";
           // Vazão medida na saída da bomba
-          json << "\"vazao\":" << sensorVazao.ler_valor() << ",";
+          json << "\"vazao_entrada\":" << sensorVazaoEntrada.ler_valor() << ",";
+          // Vazão efetiva fornecida à rede de distribuição
+          json << "\"vazao_saida\":" << sensorVazaoSaida.ler_valor() << ",";
           // Valor atual do pH
           json << "\"ph\":" << sensorPH.ler_valor() << ",";
           // Valor atual da turbidez

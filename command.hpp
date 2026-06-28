@@ -6,6 +6,8 @@
 
 #include "ETA.hpp"
 #include "CONTROLADOR.hpp"
+#include "SENSOR.hpp"
+#include "ALARME.hpp"
 
 using namespace std;
 
@@ -100,6 +102,46 @@ public:
     void executar() override
     {
         cout << "Encerrando sistema..." << endl;
+    }
+};
+
+class FalhaConexaoPhCommand : public Command
+{
+private:
+    sensor_ph *sensorPH;
+    alarme_ph *alarmePH;
+
+public:
+    FalhaConexaoPhCommand(sensor_ph *s, alarme_ph *a) : sensorPH(s), alarmePH(a) {}
+
+    void executar() override
+    {
+        cout << "\n=====================================\n";
+        cout << "🚨 FALHA INJETADA: Link Modbus do PH-101 rompido!" << endl;
+        cout << "=====================================\n";
+
+        sensorPH->ativar_falha();
+        alarmePH->disparar();
+    }
+};
+
+class RepararPhCommand : public Command
+{
+private:
+    sensor_ph *sensorPH;
+    alarme_ph *alarmePH;
+
+public:
+    RepararPhCommand(sensor_ph *s, alarme_ph *a) : sensorPH(s), alarmePH(a) {}
+
+    void executar() override
+    {
+        cout << "\n=====================================\n";
+        cout << "🔧 MANUTENÇÃO: Sensor PH-101 reconectado com sucesso." << endl;
+        cout << "=====================================\n";
+
+        sensorPH->reparar_falha();
+        alarmePH->silenciar();
     }
 };
 
