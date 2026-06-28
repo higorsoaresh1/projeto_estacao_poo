@@ -12,7 +12,7 @@ using namespace std;
 class Command
 {
 public:
-    virtual void executar() = 0;
+    virtual void executar() = 0; // Essa linha força que toda classe que herda a classe Command é obrigada a ter a função executar
 
     virtual ~Command() {}
 };
@@ -20,11 +20,11 @@ public:
 class StartCommand : public Command
 {
 private:
-    ETA *eta;
+    ETA *eta; // Ponteiro utilizado para endicar qual ETA esta sendo ativada
 
 public:
     StartCommand(ETA *nova_eta)
-        : eta(nova_eta)
+        : eta(nova_eta) // Guarda o indereço da Eta nessa variável
     {
     }
 
@@ -54,7 +54,7 @@ public:
 class SetpointCommand : public Command
 {
 private:
-    Controlador *controlador;
+    Controlador *controlador; // Para alterar o SetPoint no nosso projeto precisamos do nível atual e do novo Setpoint
     sensor_nivel *sensor;
     double novo_setpoint;
 
