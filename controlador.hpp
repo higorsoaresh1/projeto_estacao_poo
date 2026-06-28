@@ -245,18 +245,6 @@ public:
             alarme_turbidez->silenciar();
         }
     }
-
-    bool calcular_deficit_hidrico(sensor_nivel *sensor, Inversor *inversor, Bomba *bomba, ValvulaConsumo *consumo)
-    {
-        double nivel = sensor->ler_valor();
-        double erro = setpoint - nivel;
-        double limite_inferior = setpoint - tolerancia;
-
-        double vazao_entrada = bomba->get_vazao();
-        double vazao_saida = consumo->get_vazao();
-
-        return (nivel < limite_inferior && vazao_saida > vazao_entrada) || (inversor->get_frequencia() == 100.0 && abs(erro) > tolerancia);
-    }
 };
 
 #endif
