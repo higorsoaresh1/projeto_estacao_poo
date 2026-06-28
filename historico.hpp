@@ -40,6 +40,7 @@ public:
             "tolerancia REAL,"
             "demanda REAL,"
             "vazao_entrada REAL,"
+            "vazao_saida REAL,"
             "nivel REAL,"
             "valvula_saida REAL,"
             "ph REAL,"
@@ -63,12 +64,12 @@ public:
         }
     }
 
-    void registrar(string timestamp, int ciclo, double nivel, double vazao_entrada, double ph, double setpoint, double tolerancia,
+    void registrar(string timestamp, int ciclo, double nivel, double vazao_entrada, double vazao_saida, double ph, double setpoint, double tolerancia,
                    double demanda, double turbidez, double valvula_saida, bool bomba, bool valvula, bool alarme_ph, bool alarme_nivel,
                    bool alarme_vazao, bool alarme_turbidez, bool alarme_rac)
     { /*Registro dos dados no banco de dados*/
         string sql = "INSERT INTO historico "
-                     "(timestamp, ciclo, setpoint, tolerancia, demanda, vazao_entrada, nivel, valvula_saida, ph, turbidez, "
+                     "(timestamp, ciclo, setpoint, tolerancia, demanda, vazao_entrada, vazao_saida, nivel, valvula_saida, ph, turbidez, "
                      "bomba, valvula, alarme_ph, alarme_nivel, alarme_vazao, alarme_turbidez, alarme_racionamento) VALUES ('" +
                      timestamp + "'," +
                      to_string(ciclo) + "," +
@@ -76,6 +77,7 @@ public:
                      to_string(tolerancia) + "," +
                      to_string(demanda) + "," +
                      to_string(vazao_entrada) + "," +
+                     to_string(vazao_saida) + "," +
                      to_string(nivel) + "," +
                      to_string(valvula_saida) + "," +
                      to_string(ph) + "," +

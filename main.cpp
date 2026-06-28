@@ -47,6 +47,7 @@ int main()
 
      sensor_nivel sensorNivel("LT-101", "Area 1", 0.0, 150.0, 1000.0, &reservatorio);
      sensor_vazao sensorVazao("FT-101", "Area 1", 0.0, 25.0, &bomba);
+     sensor_vazao sensorVazaoSaida("FT-102", "Area 1", 0.0, 25.0, &valvulaConsumo);
      sensor_ph sensorPH("PH-101", "Area 1", 7.0, 6.0, 8.0);
      sensor_turbidez sensorTurbidez("TB-101", "Area 1", 0.5, 0.0, 1.0);
 
@@ -77,6 +78,8 @@ int main()
 
      while (true)
      {
+          double nivel_atual = sensorNivel.ler_valor();
+
           ifstream arquivo_comando("comando.txt");
 
           if (arquivo_comando.is_open())
@@ -95,7 +98,6 @@ int main()
 
                     if (comando)
                     {
-
                          comando->executar();
 
                          // Limpa o arquivo
@@ -158,10 +160,7 @@ int main()
                sensorPH.reparar_falha();
           }
 
-          // Verifica estabilidade
-          double nivel = sensorNivel.ler_valor();
-
-          if (abs(nivel - controlador.get_setpoint()) <= controlador.get_tolerancia())
+          if (abs(nivel_atual - controlador.get_setpoint()) <= controlador.get_tolerancia())
           {
                ciclos_estavel++;
           }
@@ -186,10 +185,10 @@ int main()
           string timestamp = ss.str();
 
           // Registro atualizado incluindo o alarme de racionamento no banco de dados SQLite
-          historico.registrar(timestamp, ciclo, sensorNivel.ler_valor(), sensorVazao.ler_valor(), sensorPH.ler_valor(), controlador.get_setpoint(),
-                              controlador.get_tolerancia(), consumo_externo_solicitado, sensorTurbidez.ler_valor(), valvulaConsumo.get_abertura(),
-                              bomba.esta_operando(), valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(),
-                              alarmeTurbidez.esta_ativo(), alarmeRac.esta_ativo());
+          historico.registrar(timestamp, ciclo, nivel_atual, sensorVazao.ler_valor(), sensorVazaoSaida.ler_valor(), sensorPH.ler_valor(), controlador.get_setpoint(),
+                              controlador.get_tolerancia(), consumo_externo_solicitado, sensorTurbidez.ler_valor(), valvulaConsumo.get_abertura(), bomba.esta_operando(),
+                              valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(), alarmeTurbidez.esta_ativo(),
+                              alarmeRac.esta_ativo());
 
           // Escrita no JSON
           /*Criação da lógica da escrita do JSON LINHA, pois o padrão JSON não permite trabalhar em
@@ -207,14 +206,14 @@ int main()
           // Faixa desejada de tolerância aceitável em torno do setpoint
           json << "\"tolerancia\":" << controlador.get_tolerancia() << ",";
           // Vazão efetiva fornecida à rede de distribuição
-          json << "\"vazao_saida\":" << valvulaConsumo.get_vazao() << ",";
+          json << "\"vazao_saida\":" << sensorVazaoSaida.ler_valor() << ",";
           // Demanda externa solicitada pelo sistema consumidor
           json << "\"demanda\":" << consumo_externo_solicitado << ",";
 
           // Bloco referente ao sensores do ETA
           json << "\"sensores\":{";
           // Volume atual do reservatório
-          json << "\"nivel\":" << sensorNivel.ler_valor() << ",";
+          json << "\"nivel\":" << nivel_atual << ",";
           // Vazão medida na saída da bomba
           json << "\"vazao\":" << sensorVazao.ler_valor() << ",";
           // Valor atual do pH
@@ -257,7 +256,7 @@ int main()
 
           cout << "Volume atual: " << reservatorio.get_volume_atual() << " m3\n";
           cout << "Consumo Solicitado: " << consumo_externo_solicitado << " m3/ciclo\n";
-          cout << "Vazao Efetiva de Saida: " << valvulaConsumo.get_vazao() << " m3/ciclo\n";
+          cout << "Vazao Efetiva de Saida: " << sensorVazaoSaida.ler_valor() << " m3/ciclo\n";
      }
      json.close();
 

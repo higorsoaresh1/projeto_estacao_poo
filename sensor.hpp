@@ -5,6 +5,7 @@
 #include <string>
 #include "BOMBA.hpp"
 #include "RESERVATORIO.hpp"
+#include "VALVULA_CONSUMO.hpp"
 
 using namespace std;
 
@@ -47,8 +48,8 @@ private:
     bool falha_comunicacao;
 
 public:
-    sensor_ph(string tag_nova, string area_nova,double valor_lido_novo,double valor_minimo_novo,double valor_maximo_novo)
-            : Sensor(tag_nova,area_nova,valor_lido_novo,valor_minimo_novo,valor_maximo_novo),falha_comunicacao(false)
+    sensor_ph(string tag_nova, string area_nova, double valor_lido_novo, double valor_minimo_novo, double valor_maximo_novo)
+        : Sensor(tag_nova, area_nova, valor_lido_novo, valor_minimo_novo, valor_maximo_novo), falha_comunicacao(false)
     {
     }
 
@@ -118,17 +119,30 @@ public:
 class sensor_vazao : public Sensor
 { /*Classe para representar sensor de vazão*/
 private:
-    Bomba *bomba;
+    Bomba *bomba = nullptr;
+    ValvulaConsumo *valvula = nullptr;
 
 public:
+    // Construtor 1: Para monitorar a Bomba (Entrada)
     sensor_vazao(string tag_nova, string area_nova, double valor_minimo_novo, double valor_maximo_novo, Bomba *bomba_nova)
         : Sensor(tag_nova, area_nova, 0.0, valor_minimo_novo, valor_maximo_novo), bomba(bomba_nova) {}
 
-    double ler_valor() override
-    { /*Verifica a vazão da bomba*/
-        valor_lido = bomba->get_vazao();
+    // Construtor 2: Para monitorar a Válvula de Consumo (Saída)
+    sensor_vazao(string tag_nova, string area_nova, double valor_minimo_novo, double valor_maximo_novo, ValvulaConsumo *valvula_nova)
+        : Sensor(tag_nova, area_nova, 0.0, valor_minimo_novo, valor_maximo_novo), valvula(valvula_nova) {}
 
-        cout << "Lendo sensor de vazao " << tag << ".\nVazao bomba = " << valor_lido << " m3/ciclo" << endl;
+    double ler_valor() override
+    {
+        if (bomba != nullptr)
+        {
+            valor_lido = bomba->get_vazao();
+            cout << "Lendo sensor de vazao de entrada " << tag << ".\nVazao bomba = " << valor_lido << " m3/ciclo" << endl;
+        }
+        else if (valvula != nullptr)
+        {
+            valor_lido = valvula->get_vazao();
+            cout << "Lendo sensor de vazao de saida " << tag << ".\nVazao consumo = " << valor_lido << " m3/ciclo" << endl;
+        }
 
         return valor_lido;
     }

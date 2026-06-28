@@ -35,7 +35,8 @@ public:
 
     double get_vazao() const
     {
-        if (inversor == nullptr)
+        // Se a bomba estiver desligada, a vazão é ZERO, não importa a frequência do inversor
+        if (!operando || inversor == nullptr)
             return 0.0;
 
         return vazao_maxima * inversor->get_frequencia() / 100.0;
