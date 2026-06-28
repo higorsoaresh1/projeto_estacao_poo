@@ -50,9 +50,80 @@ Preencha uma linha por interacao relevante com IA.
 ->rejeitado: Criação do supervisório antes da construção de todo o código e utilização de funções muito complexas;
 ->justificativa:
 
--13/06/2026: Ajuda na configuração e aplicação do streamlit
-->aceito:
-->rejeitado:
-->justificativa:
+-16/06/2026: Ajuda na configuração e aplicação do streamlit
+->aceito: Auxilio na implementação de interfaces gráficas dentro do supervisório ;
+->rejeitado: Utilizar funções desconhecidas de python ou que não tivessem grande impacto dentro do projeto;
+->justificativa: Atender as demandas solicitadas pelo projeto, evitando utilizar funções desnecessárias;
+
+-17/06/2026: Implementação do botão de mudar setpoint dentro do supervisório
+->aceito: Ajuda na criaçao do botão dentro do supervisório e na criação do arquivo comando.txt para criar a comunicação entre o supervisório e o sistema c++;
+->rejeitado: Aplicar um padrão de projeto command apenas para esse botão, visto que, seria melhor aplicar esse padrão com todos os comandos prontos;
+->justificativa: Evitar quebrar linha de raciocínio lógico com alterações mais complexas, por enquanto;
+
+-17/06/2026: Alteração da interface gráfica do supervisório streamlit
+->aceito: Alterar a posição das colunas, organizar a sidebar e melhorar a construção do gráfico dentro do supervisório;
+->rejeitado: Criar espaços personalizados para todas as variáveis do projeto;
+->justificativa: Melhorar a interface e funcionamento do supervisório sem gastar muito tempo com aplicações desnecessárias;
+
+-19/06/2026: Criação da classe inversor.hpp
+->aceito: Criar a classe inversor.hpp para alterar a lógica de funcionamento da bomba, assim controlando melhor a vazão de entrada;
+->rejeitado: Continuar com a lógica de off/on na bomba;
+->justificativa: Melhorar o funcionamento da bomba e da variável de vazão de entrada dentro da malha fechada, tornando o sistema mais realista;
+
+-21/06/2026: Alteração do funcionamento do controle de nível
+->aceito: Criar variável de demanda para auxiliar no controle do nível do reservatório, permitindo melhor relação entre vazão de entrada e vazão de saída;
+->rejeitado: Deixar o controle da vazão de saída como estava;
+->justificativa: Melhorar o funcionamento da malha fechada, tornando o sistema mais realista e evitando erros dentro da simulação;
+
+-21/06/2026: Criação da classe Alarme_racionamento
+->aceito: Auxilio na implementação do alarme de racionamento em relação a variável de demanda;
+->rejeitado: Mundanças de sintaxe dentro na classe base alarme;
+->justificativa: Apenas implementar o alarme de racionamento sem grande impacto dentro do código;
+
+-22/06/2026: 
+->aceito: Auxilio na criação de um tanque animado dentro do supervisório streamlit;
+->rejeitado: Alterações dentro das outras variáveis na interface sem motivos plausíveis;
+->justificativa: Melhorar a interface do programa, tornando o sistema mais interativo;
+
+-27/06/2026: Aplicação do padrão de projeto Command para os comandos de atuação do sistema
+->aceito: Auxilio na implementação do padrão Command para os comandos de start, stop, mudar setpoint e tolerância, 
+além de aplicar o padrão de projeto factory ao mesmo tempo;
+->rejeitado: Utilizar vetores dinâmicos dentro das classes command;
+->justificativa: Aplicar padrões de projeto para melhorar a estrutura do código e facilitar futuras alterações deste. Além disso, também evitou-se utilizar 
+lógicas mais complexas que não teriam eficiência para o atual porte do projeto;
+
+-27/06/2026: Criação e aplicação do timestamp 
+->aceito: Utilizar as bibliotecas iomanip e sstream, criação da função de calculo do timestamp e aplicação da variavel time dentro do JSON e no supervisório;
+->rejeitado: Realizar o calculo do timestamp apenas dentro da classe histórico;
+->justificativa: Criar e aplicar o timestamp dentro do projeto, facilitando a leitura das atualizações dos dados em tempo real e evitando 
+criar situações mais complexas sem justificativas tão necessárias;
+
+-27/06/2026: Auxilio na criação da falha simulada
+->aceito: Criar a falha simulada utilizando o PH como referência;
+->rejeitado: Utilizar alguma variavel pertecente a malha fechada como referêncial da falha simulada;
+->justificativa: Criar uma falha simulada simples que demonstre o funcionamento do sistema e que não impacte o restante do sistema de forma tão abrupta;
+
+-28/06/2026: Ideias para a aplicação do ID_DUPLA
+->aceito: Utilizar o ID como constante para a alteração do comportamento de diversos campos do código;
+->rejeitado: Utilizar o ID dentro do calculo da malha fechada;
+->justificativa: Alterar o funcionamento do sistema utilizando o ID próprio da dupla, sem criar nenhum problema no funcionamento do projeto;
+
+-28/06/2026: Reparação de erro dentro da lógica do cálculo de nível 
+->aceito: Utilizar a lógica anti-windup dentro do controlador;
+->rejeitado: Alterar a lógica da bomba para um sistema off/on;
+->justificativa: Evitar erros na lógica do sistema de nível e deixar o projeto mais realista;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

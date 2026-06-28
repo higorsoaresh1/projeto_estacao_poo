@@ -1,10 +1,12 @@
-# ID_dupla = 80( 24 + 56)
-
 # Sistema Supervisório para Estação de Tratamento de Água (ETA)
 
-Projeto desenvolvido para a disciplina de Programação Orientada a Objetos do Instituto Federal do Espírito Santo, Serra.
-    
-Autores:
+**Disciplina:** Programação Orientada a Objetos
+
+**Instituto:** Instituto Federal do Espírito Santo (IFES) - Campus Serra
+
+**ID da Dupla:** 80 (24 + 56)
+
+## Autores
 
 - Guilherme Parreira
 - Higor Soares
@@ -30,28 +32,46 @@ Este projeto simula uma Estação de Tratamento de Água (ETA) utilizando progra
 
 # Estrutura do Projeto
 
-├── main.cpp
-├── supervisorio.py
-├── ALARME.hpp
-├── BOMBA.hpp
-├── CONTROLADOR.hpp
-├── ETA.hpp
-├── HISTORICO.hpp
-├── INVERSOR.hpp
-├── RESERVATORIO.hpp
-├── SENSOR.hpp
-├── VALVULA.hpp
-├── VALVULA_CONSUMO.hpp
-│
-├── dados_eta.jsonl
-├── historico_eta.db
-├── comando.txt
-│
-└── uml_eta.mmd
+── main.cpp
+── supervisorio.py
+── ALARME.hpp
+── BOMBA.hpp
+── CONTROLADOR.hpp
+── ETA.hpp
+── HISTORICO.hpp
+── INVERSOR.hpp
+── RESERVATORIO.hpp
+── SENSOR.hpp
+── VALVULA.hpp
+── VALVULA_CONSUMO.hpp
+── dados_eta.jsonl
+── historico_eta.db
+── comando.txt
+── uml_eta.mmd
 
 # Arquitetura do sistema
 
-// Criar uma tabela aqui explicando cada sistema do projeto ( Ex: Bomba, controlador, etc...); //
+ETA - Representa a estação de tratamento
+
+Controlador - Executa o controle PI ( Proporcional-Integral)
+
+Reservatório - Armazena o volume de água
+
+Sensores(ph, turbidez, nível, vazão) - Monitoram as variáveis do processo
+
+Alarmes(ph,turbidez, nível, vazão, racionamento) - Alertam sobre mudanças indesejadas dentro do sistema 
+
+Bomba - Realiza o enchimento do reservatório
+
+Inversor - Controla a frequência da bomba
+
+Válvula de Consumo - Simula a demanda externa
+
+válvula de Alívio - Evita transbordamento
+
+Histórico - Armazena dados no SQLite, servindo como a memória do sistema
+
+Supervisório - Interface gráfica do operador
 
 # Tecnologias utilizadas no projeto
 
@@ -64,26 +84,56 @@ Este projeto simula uma Estação de Tratamento de Água (ETA) utilizando progra
 
 # Padrões de projeto
 
-Os padrões de projeto aplicados nesse sistema foram COMMAND e REPOSITORY. 
+Os padrões de projeto aplicados nesse sistema foram COMMAND, REPOSITORY e FACTORY. 
 
-1. O padrão de projeto Command, implementado por meio das classes command.hpp, coomand_factory.hpp e das adaptações realizadas na main.cpp, tem como principal objetivo encapsular cada comando de atuação do sistema em uma classe específica, representando cada ação como um objeto independente. Dessa forma, operações como iniciar, parar, alterar o setpoint, modificar a tolerância e encerrar a aplicação passam a ser tratadas de maneira padronizada. 
+1. O padrão de projeto Command, implementado por meio das classes command.hpp, command_factory.hpp e das adaptações realizadas na main.cpp, tem como principal objetivo encapsular cada comando de atuação do sistema em uma classe específica, representando cada ação como um objeto independente. Dessa forma, operações como iniciar, parar, alterar o setpoint, modificar a tolerância e encerrar a aplicação passam a ser tratadas de maneira padronizada. 
 
-A principal motivação para a adoção desse padrão foi melhorar a organização da estrutura da main.cpp, que anteriormente concentrava toda a lógica de processamento dos comandos recebidos pelo supervisório. Com a utilização do padrão Command, a responsabilidade pela execução de cada operação foi transferida para classes especializadas, tornando o código mais modular, de fácil manutenção, além de facilita futuras expansões do sistema, permitindo a inclusão de novos comandos sem a necessidade de modificar significativamente a lógica existente na aplicação.
+  A principal motivação para a adoção desse padrão foi melhorar a organização da estrutura da main.cpp, que anteriormente concentrava toda a lógica de processamento dos comandos recebidos pelo supervisório. Com a utilização do padrão Command, a responsabilidade pela execução de cada operação foi transferida para classes especializadas, tornando o código mais modular, de fácil manutenção, além de facilita futuras expansões do sistema, permitindo a inclusão de novos comandos sem a necessidade de modificar significativamente a lógica existente na aplicação.
 
 2. O padrão de projeto Repository foi aplicado por intermédio da classe historico.hpp, que atua como uma camada intermediária entre a aplicação e o banco de dados SQLite. Seu principal objetivo é concentrar todas as operações de acesso e registro dos dados, tirando a necessidade dos detalhes de implementação do banco de dados serem conhecidos nas demais classes do sistema. Nesse projeto, a classe historico é responsável por estabelecer a conexão com o banco de dados SQLite, criar automaticamente a tabela de registros quando necessário e armazenar, a cada ciclo da simulação, as informações referentes aos sensores, atuadores e alarmes da ETA. 
 
-O uso desse padrão proporcionou uma melhor separação de responsabilidades, mantendo a lógica de controle de dados isolada da lógica de controle da planta. Além disso, essa abordagem facilita futuras manutenções e expansões do sistema, permitindo, por exemplo, substituir o banco de dados SQLite por outra tecnologia de armazenamento.
+  O uso desse padrão proporcionou uma melhor separação de responsabilidades, mantendo a lógica de controle de dados isolada da lógica de controle da planta. Além disso, essa abordagem facilita futuras manutenções e expansões do sistema, permitindo, por exemplo, substituir o banco de dados SQLite por outra tecnologia de armazenamento.
 
+3. O padrão de projeto Factory foi aplicado por intermédio da classe CommandFactory.hpp, responsável por centralizar a criação dos diferentes comandos utilizados pelo sistema supervisório. Seu principal objetivo é separar a lógica de criação dos objetos da lógica de execução da aplicação, evitando que a classe principal main.cpp precise conhecer os detalhes de construção de cada comando disponível.Por exemplo, nesse projeto, a CommandFactory recebe os comandos enviados pelo supervisório na forma de texto (como START, STOP, SETPOINT, TOLERANCIA , EXIT, INICIAR_FALHA_PH, RESOLVER_FALHA_PH) e a partir dessas informações, instancia automaticamente o objeto correspondente, retornando como ponteiro para a classe command.
 
-// Comentar os padrões de projetos utilizados e suas funcionalidades // 
+  A utilização desse padrão proporcionou uma melhor organização da estrutura do código, separando a responsabilidade de criação dos comandos da lógica principal da aplicação. Além disso, essa abordagem facilita futuras expansões do sistema, permitindo adicionar novos comandos ao supervisório com poucas modificações.
 
 # Controle PI 
 
-// Explicar melhor o funcionamento de dados como setpoint, erro, tolerância, ganho integral, etc... //
+O controle do nível do reservatório é realizado por meio de um Controlador Proporcional-Integral (PI), cuja função é manter o volume do reservatório o mais próximo possível do valor definido pelo operador (setpoint), compensando automaticamente as variações provocadas pelo consumo externo.
+
+A cada ciclo da simulação, o controlador realiza a leitura do sensor de nível, calcula o erro em relação ao valor desejado e determina a frequência de operação do inversor, que por sua vez controla a vazão fornecida pela bomba.
+
+Explicação dos parâmetros utilizados dentro da lógica do PI:
+
+Setpoint - Volume desejado para o reservatório. É o valor que o controlador tenta manter durante toda a operação.
+
+Nível Atual - Valor medido pelo sensor de nível, correspondente ao volume presente no reservatório naquele instante.
+
+Erro - Diferença entre o setpoint e o nível atual do reservatório. É calculado pela expressão: Erro = Setpoint − Nível Atual.
+
+Tolerância - Faixa de operação considerada aceitável ao redor do setpoint. Enquanto o nível permanecer dentro dessa região, considera-se que o sistema está estabilizado.
+
+Ganho Proporcional(Kp) - Determina a intensidade da resposta imediata do controlador diante do erro. Quanto maior seu valor, mais rapidamente o sistema reage às variações do nível.
+
+Ganho Integral(Ki) - Responsável por acumular o erro ao longo do tempo, eliminando erros permanentes e permitindo que o nível atinja o setpoint com maior precisão.
+
+Erro integral - Soma acumulada dos erros ao longo dos ciclos da simulação. Essa variável é utilizada pelo termo integral do controlador PI.
+
 
 # Sistema de alarmes
 
-// Fazer uma tabela falando sobre os alarmes e quais são suas condições de funcionamento//
+Alarmes e suas condições de ativação:
+
+Alarme Nível - Volume fora da faixa
+
+Alarme Vazão - Vazão fora do intervalo 
+
+Alarme PH - pH fora do limite aceitável 
+
+Alarme Turbidez - Turbidez elevada
+
+Alarme Racionamento - Demanda superior à capacidade
 
 # JSONL
 
@@ -92,14 +142,15 @@ Durante o desenvolvimento do projeto, foi necessária a utilização do formato 
 Um exemplo de JSONL dentro do sistema:
 
 {
-  "ciclo": 15,
+  "ciclo": 1,
+  "timestamp": "2026-06-28 01:56:20",
   "setpoint": 700,
   "tolerancia": 80,
-  "vazao_saida": 19.5,
-  "demanda": 23.4,
+  "vazao_saida": 5.22706,
+  "demanda": 5.22706,
 
   "sensores": {
-    "nivel": 682.7,
+    "nivel": 345.773,
     "vazao": 20.0,
     "ph": 7.0,
     "turbidez": 0.5
@@ -107,8 +158,8 @@ Um exemplo de JSONL dentro do sistema:
 
   "atuadores": {
     "frequencia": 100,
-    "vazao_bomba": 20,
-    "abertura_consumo": 0.78,
+    "vazao_bomba": 20.0,
+    "abertura_consumo": 0.209082,
     "valvula_alivio": false
   },
 
@@ -117,44 +168,98 @@ Um exemplo de JSONL dentro do sistema:
     "nivel": false,
     "vazao": false,
     "turbidez": false,
-    "racionamento": true
+    "racionamento": false
   }
 }
 
 Onde: 
 
+- TimeStamp refere-se à data e ao horário em que o ciclo da simulação foi executado.
 - Ciclo trata-se do número do ciclo da simulação.
 - Setpoint é o nível desejado do reservatório.
-- Tolerancia é a faixa aceitável em torno do setpoint.
-- Vazao_saida trata-se da vazão efetivamente enviada aos consumidores.
-- Demanda sendo a vazão solicitada pelos consumidores.
+- Tolerância representa a faixa aceitável em torno do setpoint.
+- Vazao_saida corresponde à vazão efetivamente enviada aos consumidores.
+- Demanda representa a vazão solicitada pelo sistema consumidor.
 - Sensores.nivel indica o volume atual do reservatório.
-- Sensores.vazao indica a vazão medida na bomba.
-- S.ph indica o valor de pH da água.
-- Sensores.turbidez	indica a turbidez da água.
-- Atuadores.frequencia é a frequência aplicada pelo inversor.
-- Atuadores.vazao_bomba	sendo a vazão fornecida pela bomba.
-- Atuadores.abertura_consumo tratando-se do	percentual de abertura da válvula de consumo.
-- Atuadores.valvula_alivio é o estado da válvula de alívio.
-- Alarmes.ph indica alarme de pH.
-- Alarmes.nivel	indica alarme de nível.
-- Alarmes.vazao	indica alarme de vazão.
-- Alarmes.turbidez indica alarme de turbidez.
-- Alarmes.racionamento indica que o sistema está limitando a vazão por excesso de demanda.
-
+- Sensores.vazao indica a vazão medida pelo sensor de vazão, correspondente à vazão fornecida pela bomba.
+- Sensores.ph indica o valor do pH da água.
+- Sensores.turbidez indica a turbidez da água.
+- Atuadores.frequencia representa a frequência aplicada ao inversor de frequência.
+- Atuadores.vazao_bomba indica a vazão produzida pela bomba.
+- Atuadores.abertura_consumo representa o percentual de abertura da válvula de consumo, variando entre 0 (fechada) e 1 (totalmente aberta).
+- Atuadores.valvula_alivio indica o estado da válvula de alívio, sendo true para aberta e false para fechada.
+- Alarmes.ph indica a ocorrência de alarme de pH.
+- Alarmes.nivel indica a ocorrência de alarme de nível.
+- Alarmes.vazao indica a ocorrência de alarme de vazão.
+- Alarmes.turbidez indica a ocorrência de alarme de turbidez.
+- Alarmes.racionamento indica que o sistema entrou em regime de racionamento devido a uma demanda superior à capacidade de fornecimento.
 
 
 # Supervisório 
 
-// Explicar o que o Supervisório permite visualizar//
+O supervisório foi desenvolvido utilizando Python e a biblioteca Streamlit, sendo responsável pela interface entre o operador e a simulação da Estação de Tratamento de Água (ETA). Sua principal função é apresentar, em tempo real, o estado do processo, permitindo o monitoramento das variáveis da planta, a visualização dos alarmes e o envio de comandos de operação ao sistema.
+
+Por meio do supervisório é possível visualizar:
+
+- Nível atual do reservatório por meio de um tanque animado;
+- Leituras dos sensores de nível, vazão, pH e turbidez;
+- Frequência aplicada ao inversor de frequência;
+- Vazão fornecida pela bomba;
+- Vazão de saída para o sistema consumidor;
+- Percentual de abertura da válvula de consumo;
+- Estado da válvula de alívio;
+- Gráfico histórico da evolução do nível do reservatório;
+- Timestamp da última atualização do sistema;
+- Estado de todos os alarmes da planta.
+
+Além do monitoramento, o supervisório também permite a atuação direta sobre a simulação por meio do envio de comandos, possibilitando alterar parâmetros de operação, iniciar ou interromper a planta, simular falhas e encerrar a aplicação.
 
 # Banco de Dados
 
-// Explicar a tabela do banco de dados//
+O sistema utiliza um banco de dados SQLite para armazenar permanentemente todas as informações geradas durante a simulação da Estação de Tratamento de Água (ETA). A comunicação entre a aplicação e o banco é realizada exclusivamente pela classe Historico, sendo responsável pela criação da tabela e pelo registro automático dos dados a cada ciclo da simulação.
+
+A tabela historico possui a seguinte estrutura:
+
+- ID - Identificador único do registro (gerado automaticamente).
+- TimeStamp 
+- Ciclo 
+- Setpoint 
+- Tolerância 
+- Demanda 
+- Vazao_entrada
+- Vazao_saida
+- Nível
+- Valvula_saida
+- Ph
+- Turbidez
+- Bomba
+- Valvula
+- Alarme_ph
+- Alarme_nivel
+- Alarme_vazão
+- Alarme_turbidez
+- Alarme_racionamento
 
 # Comandos de atuação 
 
-// Citar os comandos de atuação que existem no projeto //
+A comunicação entre o supervisório e a aplicação em C++ é realizada por meio do arquivo comando.txt. Sempre que o operador aciona um botão no supervisório, um comando em formato textual é gravado nesse arquivo. Durante cada ciclo da simulação, a aplicação verifica se existe um novo comando disponível e, caso exista, utiliza a classe CommandFactory para identificar o comando recebido e instanciar automaticamente o objeto correspondente.
+
+Os comandos implementados no projeto são:
+
+- START - Inicia o funcionamento da ETA.
+
+- STOP - Interrompe a operação da ETA, mantendo a aplicação em execução.
+
+- SETPOINT - Altera o nível de referência utilizado pelo controlador PI.
+
+- TOLERANCIA - Modifica a faixa de tolerância utilizada pelo controlador.
+
+- EXIT - Encerra completamente a aplicação.
+
+- FALHA_CONEXAO_PH - Simula uma falha de comunicação no sensor de pH, fazendo com que o supervisório deixe de receber leituras válidas desse sensor.
+
+- REPARAR_PH - Restabelece a comunicação do sensor de pH, encerrando a falha simulada e permitindo que as leituras voltem ao funcionamento normal.
+
 
 # Como executar o programa
 
@@ -200,4 +305,5 @@ Onde:
 
 18/06/2026 - Reeconstrução das classes de válvula e válvula de alívio, juntamente a adaptação da malha fechada a essas novas alterações. Criação da classe inversora, além da remodelação das classes de reservatório, controlador e bomba. Além disso, a main e o supervisório foram modificados para suportarem essas alterações e para melhorar as antigas funcionalidades - (Discord compartilhado, cerca de 5 horas);
 
-20-06-2026 - Reesconstrução da malha fechada e construçã o do sistema de consumo externo (Discord compartilhado, cerca de 3 horas e 50 minutos);
+20-06-2026 - Reesconstrução da malha fechada e construção do sistema de consumo externo (Discord compartilhado, cerca de 3 horas e 50 minutos);
+
