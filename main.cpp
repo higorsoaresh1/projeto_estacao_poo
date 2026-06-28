@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <sstream>
 /*Desenvolvido por: Guilherme Parreira e Higor Soares.*/
+const int ID_DUPLA = 80; // ID próprio da Dupla (24 + 56)
 
 #include "CONTROLADOR.hpp"
 #include "HISTORICO.hpp"
@@ -19,8 +20,6 @@
 #include "COMMAND_FACTORY.hpp"
 
 using namespace std;
-
-const int ID_DUPLA = 80; // ID próprio da Dupla (24 + 56)
 
 int main()
 {
@@ -57,7 +56,7 @@ int main()
      alarme_turbidez alarmeTurbidez("AH-TB", "Area 1");
      alarme_racionamento alarmeRac("AH-RAC", "Area 1");
 
-     Controlador controlador("CTRL-101", (620 + ID_DUPLA), ID_DUPLA, 0.8, 0.03); // Substituir 80 pelo ID_DUPLA e também o setpoint para 620 + ID_DUPLA
+     Controlador controlador("CTRL-101", (620 + ID_DUPLA), ID_DUPLA, (ID_DUPLA / 100), 0.03);
      Historico historico("historico_eta.db");
 
      double consumo_externo_solicitado = 5.0 + ((double)rand() / RAND_MAX) * 20.0;
@@ -93,8 +92,7 @@ int main()
 
                if (!texto_comando.empty())
                {
-
-                    auto comando = CommandFactory::criarComando(texto_comando, &controlador, &eta, &sensorNivel);
+                    auto comando = CommandFactory::criarComando(texto_comando, &controlador, &eta, &sensorNivel, &sensorPH, &alarmePH);
 
                     if (comando)
                     {
@@ -139,26 +137,6 @@ int main()
 
           // Controle em malha fechada
           controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula, &inversor, &valvulaConsumo, consumo_externo_solicitado);
-
-          // Verificação e execução da falha simulada no sensor de PH
-          if (ciclo == 20)
-          {
-               cout << "\n=====================================\n";
-               cout << "FALHA SIMULADA" << endl;
-               cout << "Sensor de pH perdeu comunicação." << endl;
-               cout << "=====================================\n";
-
-               sensorPH.ativar_falha();
-          }
-
-          if (ciclo == 25)
-          { // Colocar um botão no supervisório para reparar falha
-               cout << "\n==========================\n";
-               cout << " A FALHA FOI REPARADA" << endl;
-               cout << "Sensor de pH voltou a ter comunicação." << endl;
-
-               sensorPH.reparar_falha();
-          }
 
           if (abs(nivel_atual - controlador.get_setpoint()) <= controlador.get_tolerancia())
           {

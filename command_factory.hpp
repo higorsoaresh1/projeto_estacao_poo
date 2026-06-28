@@ -10,6 +10,7 @@
 #include "CONTROLADOR.hpp"
 #include "ETA.hpp"
 #include "SENSOR.hpp"
+#include "ALARME.hpp"
 
 using namespace std;
 
@@ -17,7 +18,7 @@ class CommandFactory // Essa classe apenas serve para criar os comandos
 {
 public: /*Utilizar um ponteiro inteligente aqui ajuda no uso do polimorfismo,
         visto que, até seria possivel apenas usar um ponteiro normal, mas assim teriamos que deletar manualmente os comandos criados quando estes estiverem fora de uso */
-    static unique_ptr<Command> criarComando(const string &texto, Controlador *controlador, ETA *eta, sensor_nivel *sensor)
+    static unique_ptr<Command> criarComando(const string &texto, Controlador *controlador, ETA *eta, sensor_nivel *sensor, sensor_ph *sensorPH, alarme_ph *alarmePH)
     {
         // START
         if (texto == "START")
@@ -77,6 +78,17 @@ public: /*Utilizar um ponteiro inteligente aqui ajuda no uso do polimorfismo,
                 cerr << "[AVISO] Valor de TOLERANCIA fora dos limites numéricos suportados.\n";
                 return nullptr;
             }
+        }
+
+        if (texto == "FALHA_CONEXAO_PH")
+        {
+            return make_unique<FalhaConexaoPhCommand>(sensorPH, alarmePH); // <-- Passa o alarme
+        }
+
+        // REPARAR_PH
+        if (texto == "REPARAR_PH")
+        {
+            return make_unique<RepararPhCommand>(sensorPH, alarmePH); // <-- Passa o alarme
         }
 
         // Comando inválido
