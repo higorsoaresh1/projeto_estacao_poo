@@ -1,0 +1,103 @@
+---
+config:
+  layout: elk
+  look: classic
+---
+classDiagram
+    direction TB
+
+    class ETA {
+        -localizacao: string
+        -operando: bool
+        +ETA()
+        +iniciar_tratamento() void
+        +parar_tratamento() void
+        +esta_operando() bool
+    }
+
+    class Controlador {
+        +set_setpoint() void
+        +set_tolerancia() void
+    }
+
+    class sensor_nivel {
+        +ler_valor() double
+    }
+
+    class sensor_ph {
+        +ativar_falha() void
+        +reparar_falha() void
+    }
+
+    class alarme_ph {
+        +disparar() void
+        +silenciar() void
+    }
+
+    class Command {
+        <<interface>>
+        +executar()* void
+    }
+
+    class CommandFactory {
+        +criarComando() unique_ptr~Command~$
+    }
+
+    class StartCommand {
+        -eta: ETA*
+        +executar() override void
+    }
+
+    class StopCommand {
+        -eta: ETA*
+        +executar() override void
+    }
+
+    class SetpointCommand {
+        -controlador: Controlador*
+        -sensor: sensor_nivel*
+        +executar() override void
+    }
+
+    class ToleranciaCommand {
+        -controlador: Controlador*
+        +executar() override void
+    }
+
+    class ExitCommand {
+        +executar() override void
+    }
+
+    class FalhaConexaoPhCommand {
+        -sensorPH: sensor_ph*
+        -alarmePH: alarme_ph*
+        +executar() override void
+    }
+
+    class RepararPhCommand {
+        -sensorPH: sensor_ph*
+        -alarmePH: alarme_ph*
+        +executar() override void
+    }
+
+    %% Especializações do Command (Herança)
+    Command <|-- StartCommand
+    Command <|-- StopCommand
+    Command <|-- SetpointCommand
+    Command <|-- ToleranciaCommand
+    Command <|-- ExitCommand
+    Command <|-- FalhaConexaoPhCommand
+    Command <|-- RepararPhCommand
+
+    CommandFactory ..> Command : <<creates>>
+
+    %% Associações com quem executa
+    StartCommand --> ETA : opera
+    StopCommand --> ETA : opera
+    SetpointCommand --> Controlador : altera
+    SetpointCommand --> sensor_nivel : lê
+    ToleranciaCommand --> Controlador : altera
+    FalhaConexaoPhCommand --> sensor_ph : altera
+    FalhaConexaoPhCommand --> alarme_ph : dispara
+    RepararPhCommand --> sensor_ph : altera
+    RepararPhCommand --> alarme_ph : silencia
