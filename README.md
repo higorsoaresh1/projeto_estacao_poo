@@ -1,10 +1,12 @@
-# ID_dupla = 80( 24 + 56)
-
 # Sistema Supervisório para Estação de Tratamento de Água (ETA)
 
-Projeto desenvolvido para a disciplina de Programação Orientada a Objetos do Instituto Federal do Espírito Santo, Serra.
-    
-Autores:
+**Disciplina:** Programação Orientada a Objetos
+
+**Instituto:** Instituto Federal do Espírito Santo (IFES) - Campus Serra
+
+**ID da Dupla:** 80 (24 + 56)
+
+## Autores
 
 - Guilherme Parreira
 - Higor Soares
@@ -51,7 +53,27 @@ Este projeto simula uma Estação de Tratamento de Água (ETA) utilizando progra
 
 # Arquitetura do sistema
 
-// Criar uma tabela aqui explicando cada sistema do projeto ( Ex: Bomba, controlador, etc...); //
+ETA - Representa a estação de tratamento
+
+Controlador - Executa o controle PI ( Proporcional-Integral)
+
+Reservatório - Armazena o volume de água
+
+Sensores(ph, turbidez, nível, vazão) - Monitoram as variáveis do processo
+
+Alarmes(ph,turbidez, nível, vazão, turbidez) - 
+
+Bomba - Realiza o enchimento do reservatório
+
+Inversor - Controla a frequência da bomba
+
+Válvula de Consumo - Simula a demanda externa
+
+válvula de Alívio - Evita transbordamento
+
+Histórico - Armazena dados no SQLite, servindo como a memória do sistema
+
+Supervisório - Interface gráfica do operador
 
 # Tecnologias utilizadas no projeto
 
@@ -64,9 +86,9 @@ Este projeto simula uma Estação de Tratamento de Água (ETA) utilizando progra
 
 # Padrões de projeto
 
-Os padrões de projeto aplicados nesse sistema foram COMMAND e REPOSITORY. 
+Os padrões de projeto aplicados nesse sistema foram COMMAND, REPOSITORY e FACTORY. 
 
-1. O padrão de projeto Command, implementado por meio das classes command.hpp, coomand_factory.hpp e das adaptações realizadas na main.cpp, tem como principal objetivo encapsular cada comando de atuação do sistema em uma classe específica, representando cada ação como um objeto independente. Dessa forma, operações como iniciar, parar, alterar o setpoint, modificar a tolerância e encerrar a aplicação passam a ser tratadas de maneira padronizada. 
+1. O padrão de projeto Command, implementado por meio das classes command.hpp, command_factory.hpp e das adaptações realizadas na main.cpp, tem como principal objetivo encapsular cada comando de atuação do sistema em uma classe específica, representando cada ação como um objeto independente. Dessa forma, operações como iniciar, parar, alterar o setpoint, modificar a tolerância e encerrar a aplicação passam a ser tratadas de maneira padronizada. 
 
 A principal motivação para a adoção desse padrão foi melhorar a organização da estrutura da main.cpp, que anteriormente concentrava toda a lógica de processamento dos comandos recebidos pelo supervisório. Com a utilização do padrão Command, a responsabilidade pela execução de cada operação foi transferida para classes especializadas, tornando o código mais modular, de fácil manutenção, além de facilita futuras expansões do sistema, permitindo a inclusão de novos comandos sem a necessidade de modificar significativamente a lógica existente na aplicação.
 
@@ -74,8 +96,9 @@ A principal motivação para a adoção desse padrão foi melhorar a organizaç�
 
 O uso desse padrão proporcionou uma melhor separação de responsabilidades, mantendo a lógica de controle de dados isolada da lógica de controle da planta. Além disso, essa abordagem facilita futuras manutenções e expansões do sistema, permitindo, por exemplo, substituir o banco de dados SQLite por outra tecnologia de armazenamento.
 
+3. O padrão de projeto Factory foi aplicado por intermédio da classe CommandFactory.hpp, responsável por centralizar a criação dos diferentes comandos utilizados pelo sistema supervisório. Seu principal objetivo é separar a lógica de criação dos objetos da lógica de execução da aplicação, evitando que a classe principal main.cpp precise conhecer os detalhes de construção de cada comando disponível.Por exemplo, nesse projeto, a CommandFactory recebe os comandos enviados pelo supervisório na forma de texto (como START, STOP, SETPOINT, TOLERANCIA , EXIT, INICIAR_FALHA_PH, RESOLVER_FALHA_PH) e a partir dessas informações, instancia automaticamente o objeto correspondente, retornando como ponteiro para a classe command.
 
-// Comentar os padrões de projetos utilizados e suas funcionalidades // 
+A utilização desse padrão proporcionou uma melhor organização da estrutura do código, separando a responsabilidade de criação dos comandos da lógica principal da aplicação. Além disso, essa abordagem facilita futuras expansões do sistema, permitindo adicionar novos comandos ao supervisório com poucas modificações.
 
 # Controle PI 
 
@@ -200,4 +223,5 @@ Onde:
 
 18/06/2026 - Reeconstrução das classes de válvula e válvula de alívio, juntamente a adaptação da malha fechada a essas novas alterações. Criação da classe inversora, além da remodelação das classes de reservatório, controlador e bomba. Além disso, a main e o supervisório foram modificados para suportarem essas alterações e para melhorar as antigas funcionalidades - (Discord compartilhado, cerca de 5 horas);
 
-20-06-2026 - Reesconstrução da malha fechada e construçã o do sistema de consumo externo (Discord compartilhado, cerca de 3 horas e 50 minutos);
+20-06-2026 - Reesconstrução da malha fechada e construção do sistema de consumo externo (Discord compartilhado, cerca de 3 horas e 50 minutos);
+
