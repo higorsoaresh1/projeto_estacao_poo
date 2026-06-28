@@ -50,9 +50,23 @@ Preencha uma linha por interacao relevante com IA.
 ->rejeitado: Criação do supervisório antes da construção de todo o código e utilização de funções muito complexas;
 ->justificativa:
 
--13/06/2026: Ajuda na configuração e aplicação do streamlit
-->aceito:
-->rejeitado:
-->justificativa:
+-16/06/2026: Ajuda na configuração e aplicação do streamlit
+->aceito: Auxilio na implementação de interfaces gráficas dentro do supervisório ;
+->rejeitado: Utilizar funções desconhecidas de python ou que não tivessem grande impacto dentro do projeto;
+->justificativa: Atender as demandas solicitadas pelo projeto, evitando utilizar funções desnecessárias;
 
+-17/06/2026: Implementação do botão de mudar setpoint dentro do supervisório
+->aceito: Ajuda na criaçao do botão dentro do supervisório e na criação do arquivo comando.txt para criar a comunicação entre o supervisório e o sistema c++;
+->rejeitado: Aplicar um padrão de projeto command apenas para esse botão, visto que, seria melhor aplicar esse padrão com todos os comandos prontos;
+->justificativa: Evitar quebrar linha de raciocínio lógico com alterações mais complexas, por enquanto;
+
+-17/06/2026: Alteração da interface gráfica do supervisório streamlit
+->aceito: Alterar a posição das colunas, organizar a sidebar e melhorar a construção do gráfico dentro do supervisório;
+->rejeitado: Criar espaços personalizados para todas as variáveis do projeto;
+->justificativa: Melhorar a interface e funcionamento do supervisório sem gastar muito tempo com aplicações desnecessárias;
+
+-17/06/2026: Criação da classe inversor.hpp
+->aceito: Criar a classe inversor.hpp para alterar a lógica de funcionamento da bomba, assim controlando melhor a vazão de entrada;
+->rejeitado: 
+->justificativa:
 
