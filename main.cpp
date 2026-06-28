@@ -20,6 +20,8 @@
 
 using namespace std;
 
+const int ID_DUPLA = 80; // ID próprio da Dupla (24 + 56) 
+
 int main()
 {
      remove("historico_eta.db");
@@ -32,7 +34,7 @@ int main()
      srand(time(nullptr));
 
      // Gera o volume inicial do reservatório de forma aleatória entre 0 e 1000 m³ para simular diferentes condições iniciais.
-     double volume_inicial = rand() % 1000;
+     double volume_inicial = rand() % 1000; 
      ETA eta("Area 1");
 
      Reservatorio reservatorio("TK-101", "Area 1", 1000.0, volume_inicial);
@@ -54,7 +56,7 @@ int main()
      alarme_turbidez alarmeTurbidez("AH-TB", "Area 1");
      alarme_racionamento alarmeRac("AH-RAC", "Area 1");
 
-     Controlador controlador("CTRL-101", 700.0, 80.0, 0.8, 0.03);
+     Controlador controlador("CTRL-101", 700.0, 80.0, 0.8, 0.03); // Substituir 80 pelo ID_DUPLA e também o setpoint para 620 + ID_DUPLA
      Historico historico("historico_eta.db");
 
      double consumo_externo_solicitado = 5.0 + ((double)rand() / RAND_MAX) * 20.0;
@@ -131,6 +133,24 @@ int main()
 
           // Controle em malha fechada
           controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula, &inversor, &valvulaConsumo, consumo_externo_solicitado);
+
+          // Verificação e execução da falha simulada no sensor de PH
+          if (ciclo == 20) {
+               cout << "\n=====================================\n";
+               cout << "FALHA SIMULADA" << endl;
+               cout << "Sensor de pH perdeu comunicação." << endl;
+               cout << "=====================================\n";
+
+               sensorPH.ativar_falha();
+          }
+
+          if(ciclo == 25){
+               cout << "\n==========================\n";
+               cout << " A FALHA FOI REPARADA" << endl;
+               cout << "Sensor de pH voltou a ter comunicação." << endl;
+
+               sensorPH.reparar_falha();
+          }
 
           // Verifica estabilidade
           double nivel = sensorNivel.ler_valor();

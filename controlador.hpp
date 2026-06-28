@@ -151,6 +151,14 @@ public:
         double turbidez = sensor_turbidez->ler_valor();
         double vazao = sensor_vazao->ler_valor();
 
+        if (ph == -1){ // Condição para ativar a falha simulada no sensor de Ph
+            cout << "Falha de comunicacao do sensor de pH." << endl;
+
+            alarme_ph->disparar();
+
+            return;
+        }   
+
         // Alarme baseado puramente no gatilho de requisição de sobrecarga externa
         if (consumo_solicitado >= 20.0)
         {

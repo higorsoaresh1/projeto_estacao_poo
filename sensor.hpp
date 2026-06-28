@@ -41,14 +41,44 @@ public:
     virtual ~Sensor() = default;
 };
 
-class sensor_ph : public Sensor
-{ /*Classe para representar sensor de pH*/
+class sensor_ph : public Sensor // Classe utilizada para testar a falha simulada do programa
+{
+private:
+    bool falha_comunicacao;
+
 public:
-    using Sensor::Sensor;
+    sensor_ph(string tag_nova, string area_nova,double valor_lido_novo,double valor_minimo_novo,double valor_maximo_novo)
+            : Sensor(tag_nova,area_nova,valor_lido_novo,valor_minimo_novo,valor_maximo_novo),falha_comunicacao(false)
+    {
+    }
+
+    void ativar_falha()
+    {
+        falha_comunicacao = true;
+    }
+
+    void reparar_falha()
+    {
+        falha_comunicacao = false;
+    }
+
+    bool possui_falha() const
+    {
+        return falha_comunicacao;
+    }
 
     double ler_valor() override
     {
-        cout << "Lendo valor do sensor de pH " << tag << " na area: " << area << "." << endl;
+        cout << "Lendo valor do sensor de pH "
+             << tag
+             << endl;
+
+        if (falha_comunicacao)
+        {
+            cout << "ERRO: Sensor sem comunicacao!" << endl;
+
+            return -1;
+        }
 
         return valor_lido;
     }
