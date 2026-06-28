@@ -32,22 +32,24 @@ Este projeto simula uma Estação de Tratamento de Água (ETA) utilizando progra
 
 # Estrutura do Projeto
 
-── main.cpp
-── supervisorio.py
-── ALARME.hpp
-── BOMBA.hpp
-── CONTROLADOR.hpp
-── ETA.hpp
-── HISTORICO.hpp
-── INVERSOR.hpp
-── RESERVATORIO.hpp
-── SENSOR.hpp
-── VALVULA.hpp
-── VALVULA_CONSUMO.hpp
-── dados_eta.jsonl
-── historico_eta.db
-── comando.txt
-── uml_eta.mmd
+- main.cpp
+- supervisorio.py
+- ALARME.hpp
+- BOMBA.hpp
+- CONTROLADOR.hpp
+- ETA.hpp
+- HISTORICO.hpp
+- INVERSOR.hpp
+- RESERVATORIO.hpp
+- SENSOR.hpp
+- VALVULA.hpp
+- VALVULA_CONSUMO.hpp
+- Command.hpp
+- Command_Factory.hpp
+- dados_eta.jsonl
+- historico_eta.db
+- comando.txt
+- uml_eta.mmd
 
 # Arquitetura do sistema
 
@@ -73,6 +75,10 @@ Histórico - Armazena dados no SQLite, servindo como a memória do sistema
 
 Supervisório - Interface gráfica do operador
 
+Command - Execução dos comandos de atuação do sistema
+
+Command_Factory - Criação dos comandos de atuação
+
 # Tecnologias utilizadas no projeto
 
 - C++17
@@ -88,15 +94,15 @@ Os padrões de projeto aplicados nesse sistema foram COMMAND, REPOSITORY e FACTO
 
 1. O padrão de projeto Command, implementado por meio das classes command.hpp, command_factory.hpp e das adaptações realizadas na main.cpp, tem como principal objetivo encapsular cada comando de atuação do sistema em uma classe específica, representando cada ação como um objeto independente. Dessa forma, operações como iniciar, parar, alterar o setpoint, modificar a tolerância e encerrar a aplicação passam a ser tratadas de maneira padronizada. 
 
-  A principal motivação para a adoção desse padrão foi melhorar a organização da estrutura da main.cpp, que anteriormente concentrava toda a lógica de processamento dos comandos recebidos pelo supervisório. Com a utilização do padrão Command, a responsabilidade pela execução de cada operação foi transferida para classes especializadas, tornando o código mais modular, de fácil manutenção, além de facilita futuras expansões do sistema, permitindo a inclusão de novos comandos sem a necessidade de modificar significativamente a lógica existente na aplicação.
+A principal motivação para a adoção desse padrão foi melhorar a organização da estrutura da main.cpp, que anteriormente concentrava toda a lógica de processamento dos comandos recebidos pelo supervisório. Com a utilização do padrão Command, a responsabilidade pela execução de cada operação foi transferida para classes especializadas, tornando o código mais modular, de fácil manutenção, além de facilita futuras expansões do sistema, permitindo a inclusão de novos comandos sem a necessidade de modificar significativamente a lógica existente na aplicação.
 
 2. O padrão de projeto Repository foi aplicado por intermédio da classe historico.hpp, que atua como uma camada intermediária entre a aplicação e o banco de dados SQLite. Seu principal objetivo é concentrar todas as operações de acesso e registro dos dados, tirando a necessidade dos detalhes de implementação do banco de dados serem conhecidos nas demais classes do sistema. Nesse projeto, a classe historico é responsável por estabelecer a conexão com o banco de dados SQLite, criar automaticamente a tabela de registros quando necessário e armazenar, a cada ciclo da simulação, as informações referentes aos sensores, atuadores e alarmes da ETA. 
 
-  O uso desse padrão proporcionou uma melhor separação de responsabilidades, mantendo a lógica de controle de dados isolada da lógica de controle da planta. Além disso, essa abordagem facilita futuras manutenções e expansões do sistema, permitindo, por exemplo, substituir o banco de dados SQLite por outra tecnologia de armazenamento.
+O uso desse padrão proporcionou uma melhor separação de responsabilidades, mantendo a lógica de controle de dados isolada da lógica de controle da planta. Além disso, essa abordagem facilita futuras manutenções e expansões do sistema, permitindo, por exemplo, substituir o banco de dados SQLite por outra tecnologia de armazenamento.
 
 3. O padrão de projeto Factory foi aplicado por intermédio da classe CommandFactory.hpp, responsável por centralizar a criação dos diferentes comandos utilizados pelo sistema supervisório. Seu principal objetivo é separar a lógica de criação dos objetos da lógica de execução da aplicação, evitando que a classe principal main.cpp precise conhecer os detalhes de construção de cada comando disponível.Por exemplo, nesse projeto, a CommandFactory recebe os comandos enviados pelo supervisório na forma de texto (como START, STOP, SETPOINT, TOLERANCIA , EXIT, INICIAR_FALHA_PH, RESOLVER_FALHA_PH) e a partir dessas informações, instancia automaticamente o objeto correspondente, retornando como ponteiro para a classe command.
 
-  A utilização desse padrão proporcionou uma melhor organização da estrutura do código, separando a responsabilidade de criação dos comandos da lógica principal da aplicação. Além disso, essa abordagem facilita futuras expansões do sistema, permitindo adicionar novos comandos ao supervisório com poucas modificações.
+A utilização desse padrão proporcionou uma melhor organização da estrutura do código, separando a responsabilidade de criação dos comandos da lógica principal da aplicação. Além disso, essa abordagem facilita futuras expansões do sistema, permitindo adicionar novos comandos ao supervisório com poucas modificações.
 
 # Controle PI 
 
@@ -260,6 +266,15 @@ Os comandos implementados no projeto são:
 
 - REPARAR_PH - Restabelece a comunicação do sensor de pH, encerrando a falha simulada e permitindo que as leituras voltem ao funcionamento normal.
 
+# Assinatura operacional da dupla
+
+Alterações do sistema por meio do ID_DUPLA:
+
+- Altera o identificador do controlador, afetando o valor inicial do SetPoint e da Tolerância inicial;
+
+- Participa da falha simulada, sendo passado como parâmetro que indica o erro de conexão do sensor de PH;
+
+-  Afeta também o ganho proporcional utilizado para o sistema do controlador PI;
 
 # Como executar o programa
 
@@ -305,5 +320,30 @@ Os comandos implementados no projeto são:
 
 18/06/2026 - Reeconstrução das classes de válvula e válvula de alívio, juntamente a adaptação da malha fechada a essas novas alterações. Criação da classe inversora, além da remodelação das classes de reservatório, controlador e bomba. Além disso, a main e o supervisório foram modificados para suportarem essas alterações e para melhorar as antigas funcionalidades - (Discord compartilhado, cerca de 5 horas);
 
-20-06-2026 - Reesconstrução da malha fechada e construção do sistema de consumo externo (Discord compartilhado, cerca de 3 horas e 50 minutos);
+21-06-2026 - Reesconstrução da malha fechada e construção do sistema de consumo externo (Discord compartilhado, cerca de 3 horas e 50 minutos);
 
+22-06-2026 - Criação do tanque animado, alterações extras no supervisório, atualizações de histórico e AI_LOG ( Discord, cerca de 3 horas);
+
+27-06-2026- Atualização do README, aplicação dos padrões de projeto Commannd e Factory, ID DUPLA, correção de problemas relacionados ao nível por meio da implementação da lógica Anti-Windup, atualização do banco de dados e criação de falha simulada, além de diversas melhorias no código (Discord, cerca de 7 horas);
+
+28-06-2026 - 
+
+# Checklist de entrega do projeto
+
+- [x] Pelo menos 4 tipos de sensores.
+- [x] Pelo menos 2 bombas ou 1 bomba com 1 atuador auxiliar.
+- [x] Pelo menos 4 regras de controle.
+- [x] Pelo menos 4 comandos de atuação.
+- [x] Pelo menos 3 tipos de alarme.
+- [x] Falha simulada específica da dupla.
+- [x] Assinatura operacional documentada.
+- [x] Contrato JSON documentado.
+- [x] Herança, polimorfismo e encapsulamento evidentes.
+- [x] Pelo menos 2 padrões de projeto.
+- [x] Supervisor Streamlit funcional.
+- [x] Histórico em CSV ou SQLite.
+- [x] README atualizado.
+- [x] AI_LOG preenchido.
+- [ ] Testes executáveis.
+- [ ] Issues, commits ou pull requests mostram participação dos dois integrantes.
+- [ ] Apresentação técnica preparada.
