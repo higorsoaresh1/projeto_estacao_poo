@@ -59,24 +59,16 @@ private:
     double novo_setpoint;
 
 public:
-    SetpointCommand(Controlador *ctrl,
-                    sensor_nivel *s,
-                    double sp)
-        : controlador(ctrl),
-          sensor(s),
-          novo_setpoint(sp)
+    SetpointCommand(Controlador *ctrl, sensor_nivel *s, double sp)
+        : controlador(ctrl), sensor(s), novo_setpoint(sp)
     {
     }
 
     void executar() override
     {
-        controlador->set_setpoint(
-            novo_setpoint,
-            sensor->ler_valor());
+        controlador->set_setpoint(novo_setpoint, sensor->ler_valor());
 
-        cout << "Novo setpoint: "
-             << controlador->get_setpoint()
-             << " m3" << endl;
+        cout << "Novo setpoint: " << controlador->get_setpoint() << " m3" << endl;
     }
 };
 
@@ -87,10 +79,8 @@ private:
     double nova_tolerancia;
 
 public:
-    ToleranciaCommand(Controlador *novo_controlador,
-                      double valor)
-        : controlador(novo_controlador),
-          nova_tolerancia(valor)
+    ToleranciaCommand(Controlador *novo_controlador, double valor)
+        : controlador(novo_controlador), nova_tolerancia(valor)
     {
     }
 
@@ -98,9 +88,7 @@ public:
     {
         controlador->set_tolerancia(nova_tolerancia);
 
-        cout << "Nova tolerancia: "
-             << controlador->get_tolerancia()
-             << " m3" << endl;
+        cout << "Nova tolerancia: " << controlador->get_tolerancia() << " m3" << endl;
     }
 };
 

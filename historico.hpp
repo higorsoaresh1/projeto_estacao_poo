@@ -23,8 +23,7 @@ public:
         {
             cout << "Banco conectado.\n";
 
-            sqlite3_exec(db,
-                         "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
+            sqlite3_exec(db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
 
             criar_tabela();
         }
@@ -37,17 +36,21 @@ public:
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"
             "timestamp TEXT,"
             "ciclo INTEGER,"
+            "setpoint REAL,"
+            "tolerancia REAL,"
+            "demanda REAL,"
+            "vazao_entrada REAL,"
             "nivel REAL,"
-            "vazao REAL,"
+            "valvula_saida REAL,"
             "ph REAL,"
             "turbidez REAL,"
-            "consumo REAL,"
             "bomba INTEGER,"
             "valvula INTEGER,"
             "alarme_ph INTEGER,"
             "alarme_nivel INTEGER,"
             "alarme_vazao INTEGER,"
-            "alarme_turbidez INTEGER"
+            "alarme_turbidez INTEGER,"
+            "alarme_racionamento INTEGER"
             ");";
 
         char *erro = nullptr;
@@ -60,27 +63,31 @@ public:
         }
     }
 
-    void registrar(string timestamp, int ciclo, double nivel, double vazao, double ph, double turbidez, double consumo, bool bomba,
-                   bool valvula, bool alarme_ph, bool alarme_nivel, bool alarme_vazao, bool alarme_turbidez, bool alarme_rac)
+    void registrar(string timestamp, int ciclo, double nivel, double vazao_entrada, double ph, double setpoint, double tolerancia,
+                   double demanda, double turbidez, double valvula_saida, bool bomba, bool valvula, bool alarme_ph, bool alarme_nivel,
+                   bool alarme_vazao, bool alarme_turbidez, bool alarme_rac)
     { /*Registro dos dados no banco de dados*/
         string sql = "INSERT INTO historico "
-             "(timestamp,ciclo,nivel,vazao,ph,turbidez,consumo,"
-             "bomba,valvula,alarme_ph,alarme_nivel,"
-             "alarme_vazao,alarme_turbidez) VALUES ('" +
-             timestamp + "'," +
-             to_string(ciclo) + "," +
-             to_string(nivel) + "," +
-             to_string(vazao) + "," +
-             to_string(ph) + "," +
-             to_string(turbidez) + "," +
-             to_string(consumo) + "," +
-             to_string(bomba) + "," +
-             to_string(valvula) + "," +
-             to_string(alarme_ph) + "," +
-             to_string(alarme_nivel) + "," +
-             to_string(alarme_vazao) + "," +
-             to_string(alarme_turbidez) +
-             ");";
+                     "(timestamp, ciclo, setpoint, tolerancia, demanda, vazao_entrada, nivel, valvula_saida, ph, turbidez, "
+                     "bomba, valvula, alarme_ph, alarme_nivel, alarme_vazao, alarme_turbidez, alarme_racionamento) VALUES ('" +
+                     timestamp + "'," +
+                     to_string(ciclo) + "," +
+                     to_string(setpoint) + "," +
+                     to_string(tolerancia) + "," +
+                     to_string(demanda) + "," +
+                     to_string(vazao_entrada) + "," +
+                     to_string(nivel) + "," +
+                     to_string(valvula_saida) + "," +
+                     to_string(ph) + "," +
+                     to_string(turbidez) + "," +
+                     to_string(bomba) + "," +
+                     to_string(valvula) + "," +
+                     to_string(alarme_ph) + "," +
+                     to_string(alarme_nivel) + "," +
+                     to_string(alarme_vazao) + "," +
+                     to_string(alarme_turbidez) + "," +
+                     to_string(alarme_rac) +
+                     ");";
         char *erro = nullptr;
         /*Verificação de erro*/
         if (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &erro) != SQLITE_OK)
