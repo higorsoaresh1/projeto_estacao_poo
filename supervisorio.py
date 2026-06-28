@@ -124,7 +124,7 @@ with st.container(border=True):
         c_linha1_1, c_linha1_2, c_linha1_3 = st.columns(3)
         c_linha1_1.metric("Nível", f"{sensores['nivel']:.1f} m³")
         c_linha1_2.metric("Vazão de Entrada", f"{atuadores['vazao_bomba']:.1f} m³/ciclo")
-        c_linha1_3.metric("Vazão de Saída", f"{dados['vazao_saida']:.1f} m³/ciclo")
+        c_linha1_3.metric("Vazão de Saída", f"{sensores['vazao_saida']:.1f} m³/ciclo")
         
         st.markdown("---")
         
