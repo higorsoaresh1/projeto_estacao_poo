@@ -30,20 +30,12 @@ public:
 
     void set_setpoint(double novo_setpoint, double nivel_atual)
     {
-        double erro_antigo = setpoint - nivel_atual;
         double erro_novo = novo_setpoint - nivel_atual;
 
-        // Se o novo setpoint exigir que o tanque mude drasticamente (ex: erro muito negativo)
-        // nós resetamos a integral para a bomba desligar de fato.
-        if (erro_novo < -50.0)
-        {
-            erro_integral = 0;
-        }
-        else if (ki != 0.0)
-        {
-            erro_integral = erro_integral + (kp * (erro_antigo - erro_novo)) / ki;
-        }
-        else
+        // Se a alteração de setpoint for brusca (maior que a tolerância do processo),
+        // limpamos o histórico acumulado para o inversor calcular a rampa do zero,
+        // evitando que o tanque extrapole o limite desejado.
+        if (abs(erro_novo) > tolerancia)
         {
             erro_integral = 0;
         }
@@ -70,21 +62,31 @@ public:
     {
         double nivel = sensor->ler_valor();
         double erro = setpoint - nivel;
+
+        // 1. Cálculo base da malha Proporcional-Integral (PI)
         double proporcional = kp * erro;
         double integral = ki * erro_integral;
         double saida = proporcional + integral;
 
-        if (saida > 100)
-        {
-            saida = 100;
-        }
-        else if (saida < 0)
-        {
-            saida = 0;
-        }
-        else
+        // 2. Anti-Windup por Clamping (Bloqueio Inteligente da Integral)
+        // Impede que a integral acumule valores infinitos se o inversor já estiver saturado nos extremos.
+        bool saturado_alto = (saida >= 100.0 && erro > 0.0);
+        bool saturado_baixo = (saida <= 0.0 && erro < 0.0);
+
+        if (!saturado_alto && !saturado_baixo)
         {
             erro_integral += erro;
+        }
+
+        // Recalcula a saída com a integral atualizada e aplica as travas físicas do inversor (0% a 100%)
+        saida = proporcional + (ki * erro_integral);
+        if (saida > 100.0)
+        {
+            saida = 100.0;
+        }
+        if (saida < 0.0)
+        {
+            saida = 0.0;
         }
 
         inversor->set_frequencia(saida);
@@ -151,13 +153,14 @@ public:
         double turbidez = sensor_turbidez->ler_valor();
         double vazao = sensor_vazao->ler_valor();
 
-        if (ph == -1){ // Condição para ativar a falha simulada no sensor de Ph
+        if (ph == -1)
+        { // Condição para ativar a falha simulada no sensor de Ph
             cout << "Falha de comunicacao do sensor de pH." << endl;
 
             alarme_ph->disparar();
 
             return;
-        }   
+        }
 
         // Alarme baseado puramente no gatilho de requisição de sobrecarga externa
         if (consumo_solicitado >= 20.0)

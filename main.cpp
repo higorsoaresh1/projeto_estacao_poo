@@ -20,7 +20,7 @@
 
 using namespace std;
 
-const int ID_DUPLA = 80; // ID próprio da Dupla (24 + 56) 
+const int ID_DUPLA = 80; // ID próprio da Dupla (24 + 56)
 
 int main()
 {
@@ -34,7 +34,7 @@ int main()
      srand(time(nullptr));
 
      // Gera o volume inicial do reservatório de forma aleatória entre 0 e 1000 m³ para simular diferentes condições iniciais.
-     double volume_inicial = rand() % 1000; 
+     double volume_inicial = rand() % 1000;
      ETA eta("Area 1");
 
      Reservatorio reservatorio("TK-101", "Area 1", 1000.0, volume_inicial);
@@ -79,34 +79,38 @@ int main()
      {
           ifstream arquivo_comando("comando.txt");
 
-          if (arquivo_comando.is_open()){
-               
+          if (arquivo_comando.is_open())
+          {
+
                string texto_comando;
 
                getline(arquivo_comando, texto_comando);
 
                arquivo_comando.close();
 
-          if (!texto_comando.empty()){
-        
-            auto comando = CommandFactory::criarComando(texto_comando, &controlador, &eta, &sensorNivel);
+               if (!texto_comando.empty())
+               {
 
-               if (comando){
-            
-                    comando->executar();
+                    auto comando = CommandFactory::criarComando(texto_comando, &controlador, &eta, &sensorNivel);
 
-                    // Limpa o arquivo
-                    ofstream limpar("comando.txt");
-                    limpar.close();
+                    if (comando)
+                    {
 
-                    // Se o comando executado foi EXIT,
-                    // encerra o programa.
-                    if (dynamic_cast<ExitCommand *>(comando.get()) != nullptr){
-                    break;
+                         comando->executar();
+
+                         // Limpa o arquivo
+                         ofstream limpar("comando.txt");
+                         limpar.close();
+
+                         // Se o comando executado foi EXIT,
+                         // encerra o programa.
+                         if (dynamic_cast<ExitCommand *>(comando.get()) != nullptr)
+                         {
+                              break;
+                         }
                     }
-               } 
+               }
           }
-     }
 
           if (!eta.esta_operando())
           {
@@ -135,7 +139,8 @@ int main()
           controlador.controlar_nivel(&sensorNivel, &reservatorio, &bomba, &valvula, &inversor, &valvulaConsumo, consumo_externo_solicitado);
 
           // Verificação e execução da falha simulada no sensor de PH
-          if (ciclo == 20) {
+          if (ciclo == 20)
+          {
                cout << "\n=====================================\n";
                cout << "FALHA SIMULADA" << endl;
                cout << "Sensor de pH perdeu comunicação." << endl;
@@ -144,7 +149,8 @@ int main()
                sensorPH.ativar_falha();
           }
 
-          if(ciclo == 25){ // Colocar um botão no supervisório para reparar falha
+          if (ciclo == 25)
+          { // Colocar um botão no supervisório para reparar falha
                cout << "\n==========================\n";
                cout << " A FALHA FOI REPARADA" << endl;
                cout << "Sensor de pH voltou a ter comunicação." << endl;
@@ -168,7 +174,7 @@ int main()
           controlador.monitorar(&sensorPH, &sensorNivel, &sensorTurbidez, &sensorVazao, &alarmePH, &alarmeNivel, &alarmeVazao, &alarmeTurbidez, &alarmeRac, consumo_externo_solicitado);
 
           // Criação do TimeStamp para a o processo de registrar no histórico
-          
+
           time_t agora = time(nullptr);
 
           tm *tempo_local = localtime(&agora);
@@ -178,25 +184,27 @@ int main()
           ss << put_time(tempo_local, "%Y-%m-%d %H:%M:%S");
 
           string timestamp = ss.str();
-          
+
           // Registro atualizado incluindo o alarme de racionamento no banco de dados SQLite
-          historico.registrar(timestamp, ciclo, sensorNivel.ler_valor(), sensorVazao.ler_valor(), sensorPH.ler_valor(), sensorTurbidez.ler_valor(), valvulaConsumo.get_abertura(),
-                              bomba.esta_operando(), valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(), alarmeTurbidez.esta_ativo(), alarmeRac.esta_ativo());
+          historico.registrar(timestamp, ciclo, sensorNivel.ler_valor(), sensorVazao.ler_valor(), sensorPH.ler_valor(), controlador.get_setpoint(),
+                              controlador.get_tolerancia(), consumo_externo_solicitado, sensorTurbidez.ler_valor(), valvulaConsumo.get_abertura(),
+                              bomba.esta_operando(), valvula.esta_aberta(), alarmePH.esta_ativo(), alarmeNivel.esta_ativo(), alarmeVazao.esta_ativo(),
+                              alarmeTurbidez.esta_ativo(), alarmeRac.esta_ativo());
 
           // Escrita no JSON
           /*Criação da lógica da escrita do JSON LINHA, pois o padrão JSON não permite trabalhar em
           loop infinito, pois nunca fecha a lógica []. O JSON Linha foi criado justamente para cobrir essa parte.*/
-          
+
           // Criação de um novo objeto JSONL referente ao ciclo atual
           json << "{";
 
-          // Número do ciclo da simulação
-          json << "\"ciclo\":" << ciclo << ",";
           // TimeStamp referente a quando o ciclo aconteceu
           json << "\"timestamp\":\"" << timestamp << "\",";
+          // Número do ciclo da simulação
+          json << "\"ciclo\":" << ciclo << ",";
           // Setpoint desejado para o controlador PI
           json << "\"setpoint\":" << controlador.get_setpoint() << ",";
-          // Faixa desejada de tolerância aceitável em torno do setpoint 
+          // Faixa desejada de tolerância aceitável em torno do setpoint
           json << "\"tolerancia\":" << controlador.get_tolerancia() << ",";
           // Vazão efetiva fornecida à rede de distribuição
           json << "\"vazao_saida\":" << valvulaConsumo.get_vazao() << ",";
@@ -237,7 +245,7 @@ int main()
           json << "\"vazao\":" << (alarmeVazao.esta_ativo() ? "true" : "false") << ",";
           // Alarme trubidez
           json << "\"turbidez\":" << (alarmeTurbidez.esta_ativo() ? "true" : "false") << ",";
-          // Alarme indicando regime de racionamento  
+          // Alarme indicando regime de racionamento
           json << "\"racionamento\":" << (alarmeRac.esta_ativo() ? "true" : "false");
           json << "}";
 

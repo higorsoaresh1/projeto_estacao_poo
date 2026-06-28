@@ -13,13 +13,12 @@ using namespace std;
 
 class CommandFactory // Essa classe apenas serve para criar os comandos
 {
-public: /*Utilizar um ponteiro inteligente aqui ajuda no uso do polimorfismo, 
+public: /*Utilizar um ponteiro inteligente aqui ajuda no uso do polimorfismo,
         visto que, até seria possivel apenas usar um ponteiro normal, mas assim teriamos que deletar manualmente os comandos criados quando estes estiverem fora de uso */
-
-    static unique_ptr<Command> criarComando( const string &texto, Controlador *controlador, ETA *eta, sensor_nivel *sensor)
+    static unique_ptr<Command> criarComando(const string &texto, Controlador *controlador, ETA *eta, sensor_nivel *sensor)
     {
         // START
-        
+
         if (texto == "START")
         {
             return make_unique<StartCommand>(eta);
@@ -48,10 +47,7 @@ public: /*Utilizar um ponteiro inteligente aqui ajuda no uso do polimorfismo,
         {
             double novo_setpoint = stod(texto.substr(9)); // Transforma string para valor inteiro
 
-            return make_unique<SetpointCommand>(
-                controlador,
-                sensor,
-                novo_setpoint);
+            return make_unique<SetpointCommand>(controlador, sensor, novo_setpoint);
         }
 
         // ==========================
@@ -61,9 +57,7 @@ public: /*Utilizar um ponteiro inteligente aqui ajuda no uso do polimorfismo,
         {
             double nova_tolerancia = stod(texto.substr(11));
 
-            return make_unique<ToleranciaCommand>(
-                controlador,
-                nova_tolerancia);
+            return make_unique<ToleranciaCommand>(controlador, nova_tolerancia);
         }
 
         // Comando inválido
