@@ -51,33 +51,41 @@ Este projeto simula uma Estação de Tratamento de Água (ETA) utilizando progra
 - comando.txt
 - uml_eta.mmd
 
-# Arquitetura do sistema
+# Arquitetura em duas camadas
 
-ETA - Representa a estação de tratamento
+O sistema foi organizado em duas camadas principais.
 
-Controlador - Executa o controle PI ( Proporcional-Integral)
+## Camada de Apresentação
 
-Reservatório - Armazena o volume de água
+Responsável pela interação entre o operador e a ETA.
 
-Sensores(ph, turbidez, nível, vazão) - Monitoram as variáveis do processo
+### Componentes
 
-Alarmes(ph,turbidez, nível, vazão, racionamento) - Alertam sobre mudanças indesejadas dentro do sistema 
+- Supervisório Streamlit -  Interface gráfica do operador
+- Interface de comandos - Interface responsável pelos comandos de atuação disponíveis no supervisório.
 
-Bomba - Realiza o enchimento do reservatório
+Essa camada exibe informações da planta em tempo real e envia comandos de operação para a aplicação.
 
-Inversor - Controla a frequência da bomba
+## Camada de Aplicação
 
-Válvula de Consumo - Simula a demanda externa
+Responsável por toda a lógica de funcionamento da estação de tratamento.
 
-válvula de Alívio - Evita transbordamento
+### Componentes
 
-Histórico - Armazena dados no SQLite, servindo como a memória do sistema
+- ETA - Representa a estação de tratamento
+- Controlador PI - Executa o controle PI ( Proporcional-Integral)
+- Sensores - Monitoram as variáveis do processo
+- Reservatório - Armazena o volume de água
+- Bomba - Realiza o enchimento do reservatório
+- Inversor de frequência - Controla a frequência da bomba
+- Válvula de Consumo - Simula a demanda externa
+- Válvula de Alívio - Evita transbordamento
+- Alarmes - Alertam sobre mudanças indesejadas dentro do sistema 
+- Histórico (SQLite) - Armazena dados em um Banco SQLite, servindo como a memória do sistema
+- Command - Execução dos comandos de atuação do sistema
+- CommandFactory - Criação dos comandos de atuação
 
-Supervisório - Interface gráfica do operador
-
-Command - Execução dos comandos de atuação do sistema
-
-Command_Factory - Criação dos comandos de atuação
+Essa camada realiza o controle da planta, processa os comandos enviados pelo supervisório, executa as regras de controle, registra os dados no banco de dados e mantém o funcionamento da simulação.
 
 # Tecnologias utilizadas no projeto
 
@@ -94,13 +102,13 @@ Os padrões de projeto aplicados nesse sistema foram COMMAND, REPOSITORY e FACTO
 
 1. O padrão de projeto Command, implementado por meio das classes command.hpp, command_factory.hpp e das adaptações realizadas na main.cpp, tem como principal objetivo encapsular cada comando de atuação do sistema em uma classe específica, representando cada ação como um objeto independente. Dessa forma, operações como iniciar, parar, alterar o setpoint, modificar a tolerância e encerrar a aplicação passam a ser tratadas de maneira padronizada. 
 
-A principal motivação para a adoção desse padrão foi melhorar a organização da estrutura da main.cpp, que anteriormente concentrava toda a lógica de processamento dos comandos recebidos pelo supervisório. Com a utilização do padrão Command, a responsabilidade pela execução de cada operação foi transferida para classes especializadas, tornando o código mais modular, de fácil manutenção, além de facilita futuras expansões do sistema, permitindo a inclusão de novos comandos sem a necessidade de modificar significativamente a lógica existente na aplicação.
+A principal motivação para a adoção desse padrão foi melhorar a organização da estrutura da main.cpp, que anteriormente concentrava toda a lógica de processamento dos comandos recebidos pelo supervisório. Com a utilização do padrão Command, a responsabilidade pela execução de cada operação foi transferida para classes especializadas, tornando o código mais modular, de fácil manutenção, além de facilitar futuras expansões do sistema, permitindo a inclusão de novos comandos sem a necessidade de modificar significativamente a lógica existente na aplicação.
 
-2. O padrão de projeto Repository foi aplicado por intermédio da classe historico.hpp, que atua como uma camada intermediária entre a aplicação e o banco de dados SQLite. Seu principal objetivo é concentrar todas as operações de acesso e registro dos dados, tirando a necessidade dos detalhes de implementação do banco de dados serem conhecidos nas demais classes do sistema. Nesse projeto, a classe historico é responsável por estabelecer a conexão com o banco de dados SQLite, criar automaticamente a tabela de registros quando necessário e armazenar, a cada ciclo da simulação, as informações referentes aos sensores, atuadores e alarmes da ETA. 
+2. O padrão de projeto Repository foi aplicado por intermédio da classe historico.hpp, que atua como uma camada intermediária entre a aplicação e o banco de dados SQLite. Seu principal objetivo é concentrar todas as operações de acesso e registro dos dados, eliminando a necessidade de que os detalhes de implementação do banco de dados sejam conhecidos nas demais classes do sistema. Nesse projeto, a classe historico é responsável por estabelecer a conexão com o banco de dados SQLite, criar automaticamente a tabela de registros quando necessário e armazenar, a cada ciclo da simulação, as informações referentes aos sensores, atuadores e alarmes da ETA. 
 
 O uso desse padrão proporcionou uma melhor separação de responsabilidades, mantendo a lógica de controle de dados isolada da lógica de controle da planta. Além disso, essa abordagem facilita futuras manutenções e expansões do sistema, permitindo, por exemplo, substituir o banco de dados SQLite por outra tecnologia de armazenamento.
 
-3. O padrão de projeto Factory foi aplicado por intermédio da classe CommandFactory.hpp, responsável por centralizar a criação dos diferentes comandos utilizados pelo sistema supervisório. Seu principal objetivo é separar a lógica de criação dos objetos da lógica de execução da aplicação, evitando que a classe principal main.cpp precise conhecer os detalhes de construção de cada comando disponível.Por exemplo, nesse projeto, a CommandFactory recebe os comandos enviados pelo supervisório na forma de texto (como START, STOP, SETPOINT, TOLERANCIA , EXIT, INICIAR_FALHA_PH, RESOLVER_FALHA_PH) e a partir dessas informações, instancia automaticamente o objeto correspondente, retornando como ponteiro para a classe command.
+3. O padrão de projeto Factory foi aplicado por intermédio da classe CommandFactory.hpp, responsável por centralizar a criação dos diferentes comandos utilizados pelo sistema supervisório. Seu principal objetivo é separar a lógica de criação dos objetos da lógica de execução da aplicação, evitando que a classe principal main.cpp precise conhecer os detalhes de construção de cada comando disponível. Por exemplo, nesse projeto, a CommandFactory recebe os comandos enviados pelo supervisório na forma de texto (como START, STOP, SETPOINT, TOLERANCIA , EXIT, INICIAR_FALHA_PH, RESOLVER_FALHA_PH) e a partir dessas informações, instancia automaticamente o objeto correspondente, retornando como ponteiro para a classe Command.
 
 A utilização desse padrão proporcionou uma melhor organização da estrutura do código, separando a responsabilidade de criação dos comandos da lógica principal da aplicação. Além disso, essa abordagem facilita futuras expansões do sistema, permitindo adicionar novos comandos ao supervisório com poucas modificações.
 
@@ -120,9 +128,9 @@ Erro - Diferença entre o setpoint e o nível atual do reservatório. É calcula
 
 Tolerância - Faixa de operação considerada aceitável ao redor do setpoint. Enquanto o nível permanecer dentro dessa região, considera-se que o sistema está estabilizado.
 
-Ganho Proporcional(Kp) - Determina a intensidade da resposta imediata do controlador diante do erro. Quanto maior seu valor, mais rapidamente o sistema reage às variações do nível.
+Ganho Proporcional (Kp) - Determina a intensidade da resposta imediata do controlador diante do erro. Quanto maior seu valor, mais rapidamente o sistema reage às variações do nível.
 
-Ganho Integral(Ki) - Responsável por acumular o erro ao longo do tempo, eliminando erros permanentes e permitindo que o nível atinja o setpoint com maior precisão.
+Ganho Integral (Ki) - Responsável por acumular o erro ao longo do tempo, eliminando erros permanentes e permitindo que o nível atinja o setpoint com maior precisão.
 
 Erro integral - Soma acumulada dos erros ao longo dos ciclos da simulação. Essa variável é utilizada pelo termo integral do controlador PI.
 
@@ -246,6 +254,17 @@ A tabela historico possui a seguinte estrutura:
 - Alarme_turbidez
 - Alarme_racionamento
 
+# Regras de Controle
+
+O sistema implementa as seguintes regras de controle:
+
+- Controle automático do nível do reservatório por meio de um controlador PI.
+- Acionamento automático da válvula de alívio quando o reservatório atinge nível elevado.
+- Ativação do sistema de racionamento quando a demanda supera a capacidade de fornecimento da bomba.
+- Geração automática de alarmes para nível, vazão, pH, turbidez e racionamento quando os limites definidos são ultrapassados.
+- Aplicação da lógica Anti-Windup para limitar a ação integral do controlador quando a frequência da bomba atinge os limites de operação.
+- Simulação de falha de comunicação do sensor de pH, permitindo interromper e restabelecer as leituras por meio de comandos do supervisório.
+
 # Comandos de atuação 
 
 A comunicação entre o supervisório e a aplicação em C++ é realizada por meio do arquivo comando.txt. Sempre que o operador aciona um botão no supervisório, um comando em formato textual é gravado nesse arquivo. Durante cada ciclo da simulação, a aplicação verifica se existe um novo comando disponível e, caso exista, utiliza a classe CommandFactory para identificar o comando recebido e instanciar automaticamente o objeto correspondente.
@@ -272,23 +291,119 @@ Alterações do sistema por meio do ID_DUPLA:
 
 - Altera o identificador do controlador, afetando o valor inicial do SetPoint e da Tolerância inicial;
 
-- Participa da falha simulada, sendo passado como parâmetro que indica o erro de conexão do sensor de PH;
+- Participa da implementação da falha simulada, sendo passado como parâmetro que indica o erro de conexão do sensor de PH;
 
--  Afeta também o ganho proporcional utilizado para o sistema do controlador PI;
+-  Afeta também o valor inicial do Sensor de Turbidez;
 
 # Como executar o programa
 
-1. Iniciamente utilize o comando em um terminal: g++ main.cpp -lsqlite3 -o eta
+1. Inicialmente utilize o comando em um terminal: g++ main.cpp -lsqlite3 -o eta
 
 2. Após isso, nesse mesmo terminal, utilize o seguinte comando: ./eta
 
 3. Depois de executar o código c++, abra um novo terminal e aplique o seguinte comando para abrir o supervisório StreamLit: python -m streamlit run supervisorio.py
+
 4. Após todas essas aplicações, o sistema deve rodar sem nenhum problema.
 
-# UML 
+# Testes automatizados
 
-// Atualziar a imagem depois//
+O projeto possui um conjunto de testes automatizados desenvolvido para verificar o funcionamento dos principais componentes da aplicação. Foram implementados testes unitários para as classes da ETA, além de testes de integração para validar a comunicação entre o C++ e Python.
 
+Os testes verificam:
+
+- Funcionamento do controlador PI;
+- Comportamento do reservatório;
+- Sensores e atuadores;
+- Banco de dados SQLite;
+- Interface de comandos;
+- Contrato JSON utilizado pelo supervisório;
+- Funcionamento da ETA em malha fechada;
+- Supervisório e comunicação entre C++ e Python;
+- Testes de estresse do reservatório.
+
+# Como executar os testes do programa
+
+1. Abra o terminal integrado ao arquivo de testes
+
+2. Verificar se tem o PIP do python instalado. Se não tiver, utilize o seguinte comando no terminal: python -m pip install pytest
+
+3. Caso estiver instalado, siga as seguintes instruções:
+
+Para testar o contrato Eta entre o c++ e o python: python -m pytest test_contrato_eta.py -v
+
+Para testar os comandos de atuação: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_comando.cpp -o tests/build/test_comando && ./tests/build/test_comando 
+
+Para testar o controlador, utilize: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_controlador.cpp -o tests/build/test_controlador && ./tests/build/test_controlador
+
+Para testar os sensores: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_sensor.cpp -o tests/build/test_sensor && ./tests/build/test_sensor
+
+Para testar o banco de dados Sqlite: python -m pytest tests/test_banco_sqlite.py -v
+
+Para testar o reservatório: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_reservatorio.cpp -o tests/build/test_reservatorio && ./tests/build/test_reservatorio
+
+Para testar o inversor: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_inversor.cpp -o tests/build/test_inversor && ./tests/build/test_inversor
+
+Para testar as válvulas: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_valvulas.cpp -o tests/build/test_valvulas && ./tests/build/test_valvulas
+
+Para testar a bomba: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_bomba.cpp -o tests/build/test_bomba && ./tests/build/test_bomba
+
+Para testar os alarmes: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_alarmes.cpp -o tests/build/test_alarmes && ./tests/build/test_alarmes
+
+Para testar o funcionamento da ETA: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_eta.cpp -o tests/build/test_eta && ./tests/build/test_eta
+
+Para testar a malha fechada: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_malha_fechada.cpp -o tests/build/test_malha_fechada && ./tests/build/test_malha_fechada
+
+Para testar o supervisório JSON: python -m pytest tests/test_supervisorio_json.py -v
+
+Para testar a interface dos comandos utilize: python -m pytest tests/test_interface_comandos.py -v
+
+Para realizar um teste de estresse no reservatório: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_estresse_reservatorio.cpp -o tests/build/test_estresse_reservatorio && ./tests/build/test_estresse_reservatorio
+
+Para testar a interface do supervisório: python -m pytest tests/test_supervisorio_interno.py -v
+
+# Diagrama de Classes
+
+O diagrama de classes UML do sistema foi desenvolvido utilizando Mermaid e encontra-se no arquivo:
+
+- uml_eta.mmd
+
+Esse diagrama representa a estrutura das classes, seus relacionamentos, heranças e associações utilizadas na implementação da ETA.
+
+# Divisão de responsabilidades
+
+## Guilherme Parreira
+
+- Modelagem da arquitetura do sistema;
+- Sistema de alarmes;
+- Exportação JSONL;
+- Documentação;
+- Auxílio na modelagem do sistema;
+- Revisões e integração do projeto;
+- Aplicação de padrões de projeto;
+- Construção da falha simulada da dupla;
+
+## Higor Soares
+
+- Banco SQLite;
+- Implementação das classes em C++;
+- Controlador PI;
+- Desenvolvimento do supervisório Streamlit;
+- Interface gráfica;
+- Comunicação entre Python e C++;
+- Testes automatizados;
+- Tratamento de erros;
+
+# Limitações conhecidas
+
+O sistema foi desenvolvido para fins didáticos e possui algumas simplificações.
+
+- O modelo hidráulico é simplificado.
+- Apenas uma malha de controle é fechada.
+- A comunicação entre C++ e Python é realizada por arquivos locais.
+- O sistema não utiliza comunicação industrial real.
+- A simulação não representa todos os fenômenos físicos de uma ETA real.
+- Os testes automatizados cobrem as principais funcionalidades, mas não contemplam todos os casos extremos do sistema.
+- Alguns sensores e alarmes não tem funcionamento frequente.
 
 # Histórico de desenvolvimento do projeto
 
@@ -314,19 +429,19 @@ Alterações do sistema por meio do ID_DUPLA:
 
 13/06/2026 - "Finalização" e testes da classe histórico e do supervisório, com implementação do Streamlit - (Cerca de 1 hora e 30 minutos);
 
-16/06/2026 - Reparo de erros dentro do VScode e melhorias na estrtura do código - (Discord compartilhado, cerca de 2 horas);
+16/06/2026 - Reparo de erros dentro do VScode e melhorias na estrutura do código - (Discord compartilhado, cerca de 2 horas);
 
 17/06/2026 - Discussão de estrategias de modelagem para melhorar a planta de nível - (Sala de aula, cerca de 1 hora e 30 minutos);
 
-18/06/2026 - Reeconstrução das classes de válvula e válvula de alívio, juntamente a adaptação da malha fechada a essas novas alterações. Criação da classe inversora, além da remodelação das classes de reservatório, controlador e bomba. Além disso, a main e o supervisório foram modificados para suportarem essas alterações e para melhorar as antigas funcionalidades - (Discord compartilhado, cerca de 5 horas);
+18/06/2026 - Reconstrução das classes de válvula e válvula de alívio, juntamente a adaptação da malha fechada a essas novas alterações. Criação da classe inversora, além da remodelação das classes de reservatório, controlador e bomba. Além disso, a main e o supervisório foram modificados para suportarem essas alterações e para melhorar as antigas funcionalidades - (Discord compartilhado, cerca de 5 horas);
 
-21-06-2026 - Reesconstrução da malha fechada e construção do sistema de consumo externo (Discord compartilhado, cerca de 3 horas e 50 minutos);
+21-06-2026 - Resconstrução da malha fechada e construção do sistema de consumo externo (Discord compartilhado, cerca de 3 horas e 50 minutos);
 
 22-06-2026 - Criação do tanque animado, alterações extras no supervisório, atualizações de histórico e AI_LOG ( Discord, cerca de 3 horas);
 
-27-06-2026- Atualização do README, aplicação dos padrões de projeto Commannd e Factory, ID DUPLA, correção de problemas relacionados ao nível por meio da implementação da lógica Anti-Windup, atualização do banco de dados e criação de falha simulada, além de diversas melhorias no código (Discord, cerca de 7 horas);
+27-06-2026- Atualização do README, aplicação dos padrões de projeto Command e Factory, ID DUPLA, correção de problemas relacionados ao nível por meio da implementação da lógica Anti-Windup, atualização do banco de dados e criação de falha simulada, além de diversas melhorias no código (Discord, cerca de 7 horas);
 
-28-06-2026 - 
+28-06-2026 - Aplicação dos testes automáticos, desenvolvimento do README, melhora da interface do supervisório, mudanças na falha simulada, ampliação das alterações realizadas pela assinatura da dupla e tratamento de erros( Discord, compartilhado, cerca de 8 horas);
 
 # Checklist de entrega do projeto
 
@@ -344,6 +459,6 @@ Alterações do sistema por meio do ID_DUPLA:
 - [x] Histórico em CSV ou SQLite.
 - [x] README atualizado.
 - [x] AI_LOG preenchido.
-- [ ] Testes executáveis.
-- [ ] Issues, commits ou pull requests mostram participação dos dois integrantes.
-- [ ] Apresentação técnica preparada.
+- [x] Testes executáveis.
+- [x] Issues, commits ou pull requests mostram participação dos dois integrantes.
+- [x] Apresentação técnica preparada.
