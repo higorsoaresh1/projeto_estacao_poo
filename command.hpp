@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <stdexcept>
 
 #include "ETA.hpp"
 #include "CONTROLADOR.hpp"
@@ -14,24 +15,25 @@ using namespace std;
 class Command
 {
 public:
-    virtual void executar() = 0; // Essa linha força que toda classe que herda a classe Command é obrigada a ter a função executar
-
+    virtual void executar() = 0;
     virtual ~Command() {}
 };
 
 class StartCommand : public Command
 {
 private:
-    ETA *eta; // Ponteiro utilizado para endicar qual ETA esta sendo ativada
+    ETA *eta;
 
 public:
-    StartCommand(ETA *nova_eta)
-        : eta(nova_eta) // Guarda o indereço da Eta nessa variável
-    {
-    }
+    StartCommand(ETA *nova_eta) : eta(nova_eta) {}
 
     void executar() override
     {
+        /*TRATAMENTO: Garante que a ETA existe antes de ligar*/
+        if (!eta)
+        {
+            throw runtime_error("[ERRO COMANDO] Não foi possível iniciar: ponteiro da ETA é nulo.");
+        }
         eta->iniciar_tratamento();
     }
 };
@@ -42,13 +44,15 @@ private:
     ETA *eta;
 
 public:
-    StopCommand(ETA *nova_eta)
-        : eta(nova_eta)
-    {
-    }
+    StopCommand(ETA *nova_eta) : eta(nova_eta) {}
 
     void executar() override
     {
+        /*TRATAMENTO: Garante que a ETA existe antes de desligar*/
+        if (!eta)
+        {
+            throw runtime_error("[ERRO COMANDO] Não foi possível parar: ponteiro da ETA é nulo.");
+        }
         eta->parar_tratamento();
     }
 };
@@ -56,20 +60,23 @@ public:
 class SetpointCommand : public Command
 {
 private:
-    Controlador *controlador; // Para alterar o SetPoint no nosso projeto precisamos do nível atual e do novo Setpoint
+    Controlador *controlador;
     sensor_nivel *sensor;
     double novo_setpoint;
 
 public:
     SetpointCommand(Controlador *ctrl, sensor_nivel *s, double sp)
-        : controlador(ctrl), sensor(s), novo_setpoint(sp)
-    {
-    }
+        : controlador(ctrl), sensor(s), novo_setpoint(sp) {}
 
     void executar() override
     {
-        controlador->set_setpoint(novo_setpoint, sensor->ler_valor());
+        /*TRATAMENTO: Evita crash se o hardware do controlador ou sensor sumir da memória*/
+        if (!controlador || !sensor)
+        {
+            throw runtime_error("[ERRO COMANDO] Falha ao alterar Setpoint: Controlador ou Sensor inválido.");
+        }
 
+        controlador->set_setpoint(novo_setpoint, sensor->ler_valor());
         cout << "Novo setpoint: " << controlador->get_setpoint() << " m3" << endl;
     }
 };
@@ -82,14 +89,17 @@ private:
 
 public:
     ToleranciaCommand(Controlador *novo_controlador, double valor)
-        : controlador(novo_controlador), nova_tolerancia(valor)
-    {
-    }
+        : controlador(novo_controlador), nova_tolerancia(valor) {}
 
     void executar() override
     {
-        controlador->set_tolerancia(nova_tolerancia);
+        /*TRATAMENTO: Garante consistência do ponteiro do controlador*/
+        if (!controlador)
+        {
+            throw runtime_error("[ERRO COMANDO] Falha ao alterar Tolerância: Controlador inválido.");
+        }
 
+        controlador->set_tolerancia(nova_tolerancia);
         cout << "Nova tolerancia: " << controlador->get_tolerancia() << " m3" << endl;
     }
 };
@@ -116,9 +126,12 @@ public:
 
     void executar() override
     {
-        cout << "\n=====================================\n";
+        /*TRATAMENTO: Garante integridade do teste de falha injetada*/
+        if (!sensorPH || !alarmePH)
+        {
+            throw runtime_error("[ERRO COMANDO] Falha ao injetar erro: Sensor ou Alarme de pH nulo.");
+        }
         cout << "🚨 FALHA INJETADA: Link Modbus do PH-101 rompido!" << endl;
-        cout << "=====================================\n";
 
         sensorPH->ativar_falha();
         alarmePH->disparar();
@@ -136,9 +149,12 @@ public:
 
     void executar() override
     {
-        cout << "\n=====================================\n";
+        /*TRATAMENTO: Garante integridade do comando de manutenção*/
+        if (!sensorPH || !alarmePH)
+        {
+            throw runtime_error("[ERRO COMANDO] Falha ao reparar: Sensor ou Alarme de pH nulo.");
+        }
         cout << "🔧 MANUTENÇÃO: Sensor PH-101 reconectado com sucesso." << endl;
-        cout << "=====================================\n";
 
         sensorPH->reparar_falha();
         alarmePH->silenciar();

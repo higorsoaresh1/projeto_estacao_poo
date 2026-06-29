@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <stdexcept>
 
 using namespace std;
 
@@ -15,7 +16,14 @@ protected:
 
 public:
     Alarme(string tag_nova, string area_nova, bool ativo_novo = false)
-        : tag(tag_nova), area(area_nova), ativo(ativo_novo) {}
+        : tag(tag_nova), area(area_nova), ativo(ativo_novo)
+    {
+        /*TRATAMENTO DE ERRO: Garante que nenhum alarme seja criado "fantasma" (sem identificação)*/
+        if (tag_nova.empty() || area_nova.empty())
+        {
+            throw invalid_argument("[ERRO ALARME] A 'tag' e a 'area' do alarme não podem ser vazias.");
+        }
+    }
 
     virtual void disparar()
     {
@@ -60,7 +68,7 @@ public:
     }
 };
 
-// ALARME DE NÍVEL COM ALERTA DE NÍVEL BAIXO OPERACIONAL E NÍVEL ALTO DE TRANSBORDO
+/*Alarme de nível com alerta de nível baixo e nível alto de tranbordamento.*/
 class alarme_nivel : public Alarme
 {
 public:
