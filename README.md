@@ -254,6 +254,17 @@ A tabela historico possui a seguinte estrutura:
 - Alarme_turbidez
 - Alarme_racionamento
 
+# Regras de Controle
+
+O sistema implementa as seguintes regras de controle:
+
+- Controle automático do nível do reservatório por meio de um controlador PI.
+- Acionamento automático da válvula de alívio quando o reservatório atinge nível elevado.
+- Ativação do sistema de racionamento quando a demanda supera a capacidade de fornecimento da bomba.
+- Geração automática de alarmes para nível, vazão, pH, turbidez e racionamento quando os limites definidos são ultrapassados.
+- Aplicação da lógica Anti-Windup para limitar a ação integral do controlador quando a frequência da bomba atinge os limites de operação.
+- Simulação de falha de comunicação do sensor de pH, permitindo interromper e restabelecer as leituras por meio de comandos do supervisório.
+
 # Comandos de atuação 
 
 A comunicação entre o supervisório e a aplicação em C++ é realizada por meio do arquivo comando.txt. Sempre que o operador aciona um botão no supervisório, um comando em formato textual é gravado nesse arquivo. Durante cada ciclo da simulação, a aplicação verifica se existe um novo comando disponível e, caso exista, utiliza a classe CommandFactory para identificar o comando recebido e instanciar automaticamente o objeto correspondente.
@@ -282,7 +293,7 @@ Alterações do sistema por meio do ID_DUPLA:
 
 - Participa da implementação da falha simulada, sendo passado como parâmetro que indica o erro de conexão do sensor de PH;
 
--  Afeta também o ganho proporcional utilizado para o sistema do controlador PI;
+-  Afeta também o valor inicial do Sensor de Turbidez;
 
 # Como executar o programa
 
