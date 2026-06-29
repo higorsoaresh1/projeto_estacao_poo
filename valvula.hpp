@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <stdexcept>
 
 using namespace std;
 
@@ -16,7 +17,18 @@ private:
 
 public:
     Valvula(string tag_nova, string area_nova, double vazao_alivio_nova)
-        : tag(tag_nova), area(area_nova), vazao_alivio(vazao_alivio_nova), aberta(false) {}
+        : tag(tag_nova), area(area_nova), vazao_alivio(vazao_alivio_nova), aberta(false)
+    {
+        /*TRATAMENTO DE ERRO: Garante integridade na inicialização do hardware de segurança*/
+        if (tag_nova.empty() || area_nova.empty())
+        {
+            throw invalid_argument("[ERRO VÁLVULA] A 'tag' e a 'area' da válvula não podem ser vazias.");
+        }
+        if (vazao_alivio_nova <= 0.0)
+        {
+            throw invalid_argument("[ERRO VÁLVULA] A vazão de alívio deve ser maior que zero para garantir o escoamento de segurança.");
+        }
+    }
 
     void abrir()
     {

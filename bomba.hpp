@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <stdexcept>
 #include "INVERSOR.hpp"
 
 using namespace std;
@@ -19,7 +20,18 @@ private:
 
 public:
     Bomba(string tag_nova, string area_nova, double vazao_maxima_nova, Inversor *inversor_novo = nullptr)
-        : tag(tag_nova), area(area_nova), vazao_maxima(vazao_maxima_nova), operando(false), inversor(inversor_novo) {}
+        : tag(tag_nova), area(area_nova), vazao_maxima(vazao_maxima_nova), operando(false), inversor(inversor_novo)
+    {
+        /*TRATAMENTO DE ERRO: Valida os dados de inicialização da bomba*/
+        if (tag_nova.empty() || area_nova.empty())
+        {
+            throw invalid_argument("[ERRO BOMBA] A 'tag' e a 'area' da bomba não podem ser vazias.");
+        }
+        if (vazao_maxima_nova <= 0.0)
+        {
+            throw invalid_argument("[ERRO BOMBA] A vazão máxima da bomba deve ser maior que zero.");
+        }
+    }
 
     void ligar()
     {
@@ -35,9 +47,15 @@ public:
 
     double get_vazao() const
     {
-        // Se a bomba estiver desligada, a vazão é ZERO, não importa a frequência do inversor
-        if (!operando || inversor == nullptr)
+        /*Se abomba estiver desligada, a vazão é zero.*/
+        if (!operando)
             return 0.0;
+
+        /*TRATAMENTO DE ERRO: Lança uma exceção se a bomba tentar funcionar sem um inversor associado*/
+        if (inversor == nullptr)
+        {
+            throw runtime_error("[ERRO CRÍTICO] Falha física: Tentativa de ler vazão da bomba " + tag + " sem inversor acoplado.");
+        }
 
         return vazao_maxima * inversor->get_frequencia() / 100.0;
     }

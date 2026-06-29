@@ -3,7 +3,8 @@
 
 #include <iostream>
 #include <string>
-#include <cmath> // Adicionado para garantir o funcionamento do abs() ou std::abs() se necessário
+#include <cmath>
+#include <stdexcept>
 
 #include "ALARME.hpp"
 #include "BOMBA.hpp"
@@ -30,46 +31,62 @@ public:
 
     void set_setpoint(double novo_setpoint, double nivel_atual)
     {
+        /*TRATAMENTO DE ERRO: Validação de consistência física do Setpoint*/
+        if (novo_setpoint < 0.0)
+        {
+            throw invalid_argument("[ERRO CONTROLADOR] O Setpoint não pode ser negativo.");
+        }
+
         double erro_novo = novo_setpoint - nivel_atual;
 
-        // Se a alteração de setpoint for brusca (maior que a tolerância do processo),
-        // limpamos o histórico acumulado para o inversor calcular a rampa do zero,
-        // evitando que o tanque extrapole o limite desejado.
-        if (abs(erro_novo) > tolerancia)
+        /*SÓ reseta a integral se o erro for negativo (redução brusca de setpoint onde há risco de transbordo)
+        Se o erro for positivo (precisa encher), NUNCA zeramos a integral para não derrubar a bomba.*/
+        if (erro_novo < 0.0 && abs(erro_novo) > tolerancia)
         {
             erro_integral = 0;
+        }
+        /*Opcional: Se o nível for muito crítico (perto do piso de 100), mantém a integral trabalhando*/
+        else if (nivel_atual > 200.0 && abs(erro_novo) > (tolerancia * 2.0))
+        {
+            /*Se o tanque estiver confortável e mudou muito o setpoint,
+            em vez de zerar, reduzimos a integral pela metade para suavizar, mas sem desligar a bomba.*/
+            erro_integral = erro_integral * 0.5;
         }
 
         setpoint = novo_setpoint;
     }
 
-    double get_setpoint() const
-    {
-        return setpoint;
-    }
-
-    double get_tolerancia() const
-    {
-        return tolerancia;
-    }
-
-    void set_tolerancia(double nova_tolerancia)
-    {
-        tolerancia = nova_tolerancia;
-    }
+    double get_setpoint() const { return setpoint; }
+    double get_tolerancia() const { return tolerancia; }
+    void set_tolerancia(double nova_tolerancia) { tolerancia = nova_tolerancia; }
 
     void controlar_nivel(sensor_nivel *sensor, Reservatorio *reservatorio, Bomba *bomba, Valvula *valvula, Inversor *inversor, ValvulaConsumo *consumo, double consumo_externo_solicitado)
     {
+        /*TRATAMENTO DE ERRO: Proteção defensiva contra ponteiros nulos*/
+        if (!sensor || !reservatorio || !bomba || !valvula || !inversor || !consumo)
+        {
+            throw runtime_error("[ERRO CRÍTICO] Um ou mais componentes necessários passados ao Controlador são nulos (nullptr).");
+        }
+
         double nivel = sensor->ler_valor();
+
+        /*TRATAMENTO DE ERRO: Verificação de falha de hardware ou quebra do sensor de nível*/
+        if (nivel < 0.0)
+        {
+            cerr << "[FALHA HARDWARE] Sensor de nível corrompido ou desconectado (Leitura negativa: " << nivel << " m³). Parando atuadores por segurança!" << endl;
+            inversor->set_frequencia(0.0);
+            bomba->desligar();
+            return; /*Interrompe o ciclo imediatamente sem aplicar a malha matemática PI*/
+        }
+
         double erro = setpoint - nivel;
 
-        // 1. Cálculo base da malha Proporcional-Integral (PI)
+        /* Cálculo base da malha Proporcional-Integral (PI)*/
         double proporcional = kp * erro;
         double integral = ki * erro_integral;
         double saida = proporcional + integral;
 
-        // 2. Anti-Windup por Clamping (Bloqueio Inteligente da Integral)
-        // Impede que a integral acumule valores infinitos se o inversor já estiver saturado nos extremos.
+        /*Anti-Windup por Clamping (Bloqueio Inteligente da Integral)*/
         bool saturado_alto = (saida >= 100.0 && erro > 0.0);
         bool saturado_baixo = (saida <= 0.0 && erro < 0.0);
 
@@ -78,7 +95,7 @@ public:
             erro_integral += erro;
         }
 
-        // Recalcula a saída com a integral atualizada e aplica as travas físicas do inversor (0% a 100%)
+        /*Recalcula a saída com a integral updated e aplica as travas físicas do inversor (0% a 100%)*/
         saida = proporcional + (ki * erro_integral);
         if (saida > 100.0)
         {
@@ -100,22 +117,15 @@ public:
 
         if (nivel <= 100.0)
         {
-            // Bloqueio Total Efetivo:
             consumo->set_abertura(0.0);
-
-            // Forçamos a vazão de saída para 0 para interromper a simulação física de esvaziamento
             vazao_saida_real = 0.0;
-
             cout << " [BLOQUEIO CRÍTICO] Nível atingiu o piso mínimo (" << nivel
                  << " m³). Válvula de saída FECHADA TOTALMENTE para recuperação!" << endl;
         }
         else
         {
-            // Limita e raciona se a demanda externa for maior ou igual a 20.0 m³
             if (consumo_externo_solicitado >= 20.0)
             {
-                // Limita a vazão real de saída em 19.5 m³ (Margem segura abaixo da bomba de 20)
-                // 19.5 m³ / 25.0 m³ capacidade máxima da válvula = 0.78 (78% de abertura)
                 consumo->set_abertura(19.5 / 25.0);
                 vazao_saida_real = consumo->get_vazao();
 
@@ -124,7 +134,6 @@ public:
             }
             else
             {
-                // Fluxo normal flutuante
                 consumo->set_abertura(consumo_externo_solicitado / 25.0);
                 vazao_saida_real = consumo->get_vazao();
             }
@@ -144,16 +153,22 @@ public:
         reservatorio->esvaziar_reservatorio(vazao_saida_real);
     }
 
-    // O método agora recebe o resultado lógico 'tem_deficit' e não precisa mais do ponteiro do inversor
     void monitorar(sensor_ph *sensor_ph, sensor_nivel *sensor_nivel, sensor_turbidez *sensor_turbidez, sensor_vazao *sensor_vazao, alarme_ph *alarme_ph,
                    alarme_nivel *alarme_nivel, alarme_vazao *alarme_vazao, alarme_turbidez *alarme_turbidez, alarme_racionamento *alarme_rac, double consumo_solicitado)
-    { /*Método responsável por monitorar os sensores do sistema*/
+    {
+        /*TRATAMENTO DE ERRO: Proteção defensiva para evitar falha se o subsistema de alarmes falhar*/
+        if (!sensor_ph || !sensor_nivel || !sensor_turbidez || !sensor_vazao ||
+            !alarme_ph || !alarme_nivel || !alarme_vazao || !alarme_turbidez || !alarme_rac)
+        {
+            cerr << "[ERRO CRÍTICO MONITORAMENTO] Um ou mais Sensores/Alarmes passados estão nulos! Ignorando ciclo." << endl;
+            return;
+        }
+
         double ph = sensor_ph->ler_valor();
         double nivel = sensor_nivel->ler_valor();
         double turbidez = sensor_turbidez->ler_valor();
         double vazao = sensor_vazao->ler_valor();
 
-        // Alarme baseado puramente no gatilho de requisição de sobrecarga externa
         if (consumo_solicitado >= 20.0)
         {
             alarme_rac->disparar();
@@ -163,7 +178,7 @@ public:
             alarme_rac->silenciar();
         }
 
-        // Monitoramento sensor pH.
+        /*Monitoramento sensor pH.*/
         if (ph > sensor_ph->get_valor_maximo())
         {
             cout << "pH alto detectado! \n"
@@ -181,7 +196,7 @@ public:
             alarme_ph->silenciar();
         }
 
-        // MONITORAMENTO SENSOR DE NÍVEL COM ALERTA DE NÍVEL BAIXO OPERACIONAL E NÍVEL ALTO DE TRANSBORDO
+        /*MOnitoramento sensor de nível com alerta de nivel baixo e nivel alto*/
         if (nivel <= sensor_nivel->get_valor_minimo())
         {
             cout << "[ALERTA] Nível Baixo Operacional! Volume em " << nivel << " m³." << endl;
@@ -194,13 +209,13 @@ public:
         }
         else
         {
-            // Só silencia se o alarme estava ativo antes, para evitar spam de "Nível normalizado"
             if (alarme_nivel->esta_ativo())
             {
                 alarme_nivel->silenciar();
             }
         }
-        // Monitoramento sensor de vazão.
+
+        /*Monitoramento sensor de vazão.*/
         if (vazao > sensor_vazao->get_valor_maximo())
         {
             cout << "Vazao alta detectada! \n"
@@ -218,7 +233,7 @@ public:
             alarme_vazao->silenciar();
         }
 
-        // Monitoramento sensor de turbidez.
+        /*Monitoramento sensor de turbidez*/
         if (turbidez > sensor_turbidez->get_valor_maximo())
         {
             cout << "Turbidez alta detectada! \n"
