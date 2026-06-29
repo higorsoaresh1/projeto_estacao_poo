@@ -33,7 +33,7 @@ public:
         }
     }
 
-    bool esta_operando()
+    bool esta_operando() const
     {
         return operando;
     }
