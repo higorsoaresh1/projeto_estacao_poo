@@ -326,6 +326,49 @@ Para realizar um teste de estresse no reservatório: g++ -std=c++17 -Wall -Wextr
 
 Para testar a interface do supervisório: python -m pytest tests/test_supervisorio_interno.py -v
 
+# Diagrama de Classes
+
+O diagrama de classes UML do sistema foi desenvolvido utilizando Mermaid e encontra-se no arquivo:
+
+- uml_eta.mmd
+
+Esse diagrama representa a estrutura das classes, seus relacionamentos, heranças e associações utilizadas na implementação da ETA.
+
+# Divisão de responsabilidades
+
+## Guilherme Parreira
+
+- Modelagem da arquitetura do sistema;
+- Sistema de alarmes;
+- Exportação JSONL;
+- Documentação;
+- Auxílio na modelagem do sistema;
+- Revisões e integração do projeto.
+- Aplicação de padrões de projeto
+- Construção da falha simulada da dupla
+
+## Higor Soares
+
+- Banco SQLite;
+- Implementação das classes em C++;
+- Controlador PI;
+- Desenvolvimento do supervisório Streamlit;
+- Interface gráfica;
+- Comunicação entre Python e C++;
+- Testes automatizados.
+- Tratamento de erros
+
+# Limitações conhecidas
+
+O sistema foi desenvolvido para fins didáticos e possui algumas simplificações.
+
+- O modelo hidráulico é simplificado.
+- Apenas uma malha de controle é fechada.
+- A comunicação entre C++ e Python é realizada por arquivos locais.
+- O sistema não utiliza comunicação industrial real.
+- A simulação não representa todos os fenômenos físicos de uma ETA real.
+- Os testes automatizados cobrem as principais funcionalidades, mas não contemplam todos os casos extremos do sistema.
+- Alguns sensores e alarmes não tem funcionamento frequente
 
 # Histórico de desenvolvimento do projeto
 
@@ -363,7 +406,7 @@ Para testar a interface do supervisório: python -m pytest tests/test_supervisor
 
 27-06-2026- Atualização do README, aplicação dos padrões de projeto Commannd e Factory, ID DUPLA, correção de problemas relacionados ao nível por meio da implementação da lógica Anti-Windup, atualização do banco de dados e criação de falha simulada, além de diversas melhorias no código (Discord, cerca de 7 horas);
 
-28-06-2026 - 
+28-06-2026 - Aplicação dos testes automáticos, desenvolvimento do README, melhora da interface do supervisório, mudanças na falha simulada, amplicação das alterações realizadas pela assinatura da dupla e tratamento de erros( Discord, compartilhado, cerca de 8 horas);
 
 # Checklist de entrega do projeto
 
@@ -382,5 +425,5 @@ Para testar a interface do supervisório: python -m pytest tests/test_supervisor
 - [x] README atualizado.
 - [x] AI_LOG preenchido.
 - [x] Testes executáveis.
-- [ ] Issues, commits ou pull requests mostram participação dos dois integrantes.
-- [ ] Apresentação técnica preparada.
+- [x] Issues, commits ou pull requests mostram participação dos dois integrantes.
+- [x] Apresentação técnica preparada.
