@@ -305,6 +305,22 @@ Alterações do sistema por meio do ID_DUPLA:
 
 4. Após todas essas aplicações, o sistema deve rodar sem nenhum problema.
 
+# Testes automatizados
+
+O projeto possui um conjunto de testes automatizados desenvolvido para verificar o funcionamento dos principais componentes da aplicação. Foram implementados testes unitários para as classes da ETA, além de testes de integração para validar a comunicação entre o C++ e Python.
+
+Os testes verificam:
+
+- Funcionamento do controlador PI;
+- Comportamento do reservatório;
+- Sensores e atuadores;
+- Banco de dados SQLite;
+- Interface de comandos;
+- Contrato JSON utilizado pelo supervisório;
+- Funcionamento da ETA em malha fechada;
+- Supervisório e comunicação entre C++ e Python;
+- Testes de estresse do reservatório.
+
 # Como executar os testes do programa
 
 1. Abra o terminal integrado ao arquivo de testes
