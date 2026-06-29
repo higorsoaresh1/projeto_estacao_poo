@@ -441,7 +441,7 @@ O sistema foi desenvolvido para fins didáticos e possui algumas simplificaçõe
 
 27-06-2026- Atualização do README, aplicação dos padrões de projeto Command e Factory, ID DUPLA, correção de problemas relacionados ao nível por meio da implementação da lógica Anti-Windup, atualização do banco de dados e criação de falha simulada, além de diversas melhorias no código (Discord, cerca de 7 horas);
 
-28-06-2026 - Aplicação dos testes automáticos, desenvolvimento do README, melhora da interface do supervisório, mudanças na falha simulada, ampliação das alterações realizadas pela assinatura da dupla e tratamento de erros( Discord, compartilhado, cerca de 8 horas);
+28-06-2026 - Aplicação dos testes automáticos, desenvolvimento do README, melhora da interface do supervisório, mudanças na falha simulada, ampliação das alterações realizadas pela assinatura da dupla e tratamento de erros( Discord, compartilhado, cerca de 14 horas);
 
 # Checklist de entrega do projeto
 
