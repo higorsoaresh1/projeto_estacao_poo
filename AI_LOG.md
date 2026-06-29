@@ -45,3 +45,11 @@ Preencha uma linha por interacao relevante com IA.
 | 28/06/2026 | Aplicação do ID da dupla | Utilização do ID_DUPLA para alterar o comportamento de elementos específicos do sistema | Utilização do ID dentro do algoritmo do controlador PI | Atender ao requisito da disciplina sem interferir na estabilidade do controle da planta. |
 
 | 28/06/2026 | Correção da lógica do controlador PI | Implementação da técnica Anti-Windup no controlador | Retorno ao controle liga/desliga da bomba | Evitar saturação da ação integral e melhorar a estabilidade do sistema. |
+
+| 28/06/2026 | Auxilio na criação de testes para o projeto | Criação da pasta de testes e dos arquivos de teste unitários para diversos âmbitos do código, utilizando a biblioteca cassert | Utilização de frameworks mais complexos para a implementação dos testes| Criar testes para o código com estrutura sólida e evitando programas muito complexos no atual cenário.|
+
+| 28/06/2026 | Melhora da UML do projeto | Auxilio na reorganização da UML já existente aplicando novas estruturas do código  | Utilizar modelos confusos ou que não se aplicam ao código existente | Atualizar a UML para refletir corretamente a estrutura atual do projeto..|
+
+| 28/06/2026 | Ajuda na aplicação de tratamentos de erro dentro do código | Criação de mais funções de tratamento de erro dentro de locais estratégicos do código | Aplicação de tratamentos em partes do programa com pouca importância| Ampliar o nível dos tratamentos de erro dentro do sistema.|
+
+| 28/06/2026 | Auxilio na reogranização e melhora do projeto| Pontos do projeto que poderiam ser melhorados, como interface do supervisório, erros de escrita, verificações ou funções sem utilidade| Alterações de lógicas essenciais do programa| Refinar o projeto antes da entrega, corrigindo inconsistências e melhorando sua qualidade geral.|
