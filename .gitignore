@@ -7,8 +7,6 @@
 *.db-wal
 *.jsonl
 *.txt
-build/
-cmake-build-*/
 
 # Python artefacts
 __pycache__/
