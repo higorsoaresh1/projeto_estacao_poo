@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <sqlite3.h>
+#include <stdexcept>
 
 using namespace std;
 
@@ -13,20 +14,23 @@ private:
     sqlite3 *db;
 
 public:
-    Historico(const string &nome_banco)
+    Historico(const string &nome_banco) : db(nullptr)
     { /*Abertura do banco de dados*/
         if (sqlite3_open(nome_banco.c_str(), &db) != SQLITE_OK)
         {
-            cerr << "Erro ao abrir banco: " << sqlite3_errmsg(db) << endl;
+            /*Se falhar, avisa o programa principa*/
+            string erro = sqlite3_errmsg(db);
+            if (db)
+            {
+                sqlite3_close(db);
+                db = nullptr;
+            }
+            throw runtime_error("[ERRO BANCO] Não foi possível abrir o banco: " + erro);
         }
-        else
-        {
-            cout << "Banco conectado.\n";
 
-            sqlite3_exec(db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
-
-            criar_tabela();
-        }
+        cout << "Banco conectado.\n";
+        sqlite3_exec(db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
+        criar_tabela();
     }
 
     void criar_tabela()
@@ -55,11 +59,9 @@ public:
             ");";
 
         char *erro = nullptr;
-        /*Verificação de erro*/
         if (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &erro) != SQLITE_OK)
         {
             cerr << "Erro ao criar tabela: " << erro << endl;
-
             sqlite3_free(erro);
         }
     }
@@ -67,7 +69,12 @@ public:
     void registrar(string timestamp, int ciclo, double nivel, double vazao_entrada, double vazao_saida, double ph, double setpoint, double tolerancia,
                    double demanda, double turbidez, double valvula_saida, bool bomba, bool valvula, bool alarme_ph, bool alarme_nivel,
                    bool alarme_vazao, bool alarme_turbidez, bool alarme_rac)
-    { /*Registro dos dados no banco de dados*/
+    { /*Registro dos dados usando a sua concatenação original*/
+
+        /*Se o banco não estiver aberto, não faz nada*/
+        if (!db)
+            return;
+
         string sql = "INSERT INTO historico "
                      "(timestamp, ciclo, setpoint, tolerancia, demanda, vazao_entrada, vazao_saida, nivel, valvula_saida, ph, turbidez, "
                      "bomba, valvula, alarme_ph, alarme_nivel, alarme_vazao, alarme_turbidez, alarme_racionamento) VALUES ('" +
@@ -90,19 +97,21 @@ public:
                      to_string(alarme_turbidez) + "," +
                      to_string(alarme_rac) +
                      ");";
+
         char *erro = nullptr;
-        /*Verificação de erro*/
         if (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &erro) != SQLITE_OK)
         {
-            cerr << "Erro ao inserir: " << erro << endl;
-
+            cerr << "Erro ao inserir dados: " << erro << endl;
             sqlite3_free(erro);
         }
     }
 
     ~Historico()
-    { /*Fecha a conexão com o banco de dados*/
-        sqlite3_close(db);
+    { /*Fecha a conexão com o banco de dados de forma segura*/
+        if (db)
+        {
+            sqlite3_close(db);
+        }
     }
 };
 

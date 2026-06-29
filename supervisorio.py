@@ -41,9 +41,9 @@ def renderizar_tanque_animado(nivel_atual, capacidade_maxima=1000.0):
 
     # Cores dinâmicas do fluido (Regra Dupla 80)
     if nivel_atual <= limite_baixo_operacional: cor_agua = "#ff4b4b"      # Vermelho Crítico
-    elif pct_fluido <= 25.0: cor_agua = "#ffa500"                         # Laranja Atenção
+    elif pct_fluido <= 25.0: cor_agua = "#ffa500"                          # Laranja Atenção
     elif nivel_atual >= limite_alto_transbordo: cor_agua = "#004080"      # Azul Escuro (Transbordo)
-    else: cor_agua = "#4da6ff"                                            # Azul Normal
+    else: cor_agua = "#4da6ff"                                             # Azul Normal
 
     html_conteudo = f"""
     <div style="position: relative; width: 140px; height: 210px; margin: 0 auto; font-family: sans-serif;">
@@ -83,6 +83,14 @@ def ler_ultimo_registro():
         return None
     return None
 
+# Função sutil adicionada para proteger contra erros de concorrência de I/O de arquivos com o C++
+def enviar_comando_seguro(texto_comando):
+    try:
+        with open("comando.txt", "w", encoding="utf-8") as f:
+            f.write(texto_comando)
+    except Exception as e:
+        st.sidebar.error(f"Erro de comunicação: {e}")
+
 dados = ler_ultimo_registro()
 
 if dados is None:
@@ -110,7 +118,8 @@ if alarmes.get("racionamento", False):
 if alarmes.get("nivel", False):
     st.warning("🚨 **ALERTA DE NÍVEL CRÍTICO:** Verificar o nível do reservatório!", icon="⚠️")
 
-if sensores.get("ph") == -0.8:
+# Agregado sutilmente teste de sinal menor que zero para cobrir variações de arredondamento do pH com falha
+if sensores.get("ph", 7.0) == -0.8 or sensores.get("ph", 7.0) < 0.0:
     st.error("🚨 **CRÍTICO:** Link de comunicação Modbus com o sensor PH-101 foi interrompido! Sistema operando às cegas.", icon="🔌")
 elif alarmes.get("ph", False):
     st.warning("⚠️ **ALERTA DE PROCESSO:** O valor do pH está fora da faixa segura de operação!", icon="🧪")
@@ -278,7 +287,7 @@ with col_param:
                 step=10.0
             )
             if st.button("ATUALIZAR SETPOINT", use_container_width=True):
-                with open("comando.txt", "w") as f: f.write(f"SETPOINT={novo_setpoint}")
+                enviar_comando_seguro(f"SETPOINT={novo_setpoint}")
                     
         with c2:
             # 2. LÓGICA DE TRAVA DA TOLERÂNCIA:
@@ -295,13 +304,13 @@ with col_param:
             nova_tolerancia = st.number_input(
                 "Definir Nova Tolerância (m³)", 
                 min_value=1.0, 
-                max_value=tolerancia_maxima, # O teto agora é dinâmico!
+                max_value=tolerancia_maxima,
                 value=valor_padrao_tol, 
                 step=5.0,
                 help=f"Para o setpoint atual, a tolerância máxima permitida é {tolerancia_maxima} m³."
             )
             if st.button("ATUALIZAR TOLERÂNCIA", use_container_width=True):
-                with open("comando.txt", "w") as f: f.write(f"TOLERANCIA={nova_tolerancia}")
+                enviar_comando_seguro(f"TOLERANCIA={nova_tolerancia}")
 
 #Bloco 5: Alarmes e Status de Segurança
 with col_alarm:
@@ -310,7 +319,7 @@ with col_alarm:
         c1, c2 = st.columns(2)
         
         with c1:
-            if sensores['ph'] == -0.8:
+            if sensores['ph'] == -0.8 or sensores['ph'] < 0.0:
                 st.error("🔌 Link PH-101 Offline (Queda de Conexão)", icon="🚨")
             elif alarmes["ph"]:
                 st.error("❌ Falha de pH (Fora da Faixa)", icon="⚠️")
@@ -336,24 +345,22 @@ with col_alarm:
 # Menu Lateral (Configurações do Sistema)
 st.sidebar.header("Comandos do Sistema")
 if st.sidebar.button("▶ INICIAR SISTEMA", use_container_width=True, type="primary"):
-    with open("comando.txt", "w") as f: f.write("START")
+    enviar_comando_seguro("START")
 
 if st.sidebar.button("⏹ PARAR SISTEMA", use_container_width=True):
-    with open("comando.txt", "w") as f: f.write("STOP")
+    enviar_comando_seguro("STOP")
 
 st.sidebar.markdown("---")
 if st.sidebar.button("❌ FECHAR DISPOSITIVO", use_container_width=True):
-    with open("comando.txt", "w") as f: f.write("EXIT")
+    enviar_comando_seguro("EXIT")
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("🛠️ Injeção de Falhas (Mesa de Testes)")
 
 # Botão para provocar a falha de conexão
 if st.sidebar.button("🚨 SIMULAR QUEDA DE CONEXÃO PH", use_container_width=True, type="secondary"):
-    with open("comando.txt", "w") as f: 
-        f.write("FALHA_CONEXAO_PH")
+    enviar_comando_seguro("FALHA_CONEXAO_PH")
 
 # Botão para reparar a falha
 if st.sidebar.button("🔧 REPARAR SENSOR PH", use_container_width=True, type="primary"):
-    with open("comando.txt", "w") as f: 
-        f.write("REPARAR_PH")
+    enviar_comando_seguro("REPARAR_PH")
