@@ -309,7 +309,7 @@ Alterações do sistema por meio do ID_DUPLA:
 
 1. Abra o terminal integrado ao arquivo de testes
 
-2. Verificar se tem o PIP do pyhton instalado. Se não tiver, utilize o seguinte comando no terminal: python -m pip install pytest
+2. Verificar se tem o PIP do python instalado. Se não tiver, utilize o seguinte comando no terminal: python -m pip install pytest
 
 3. Caso estiver instalado, siga as seguintes instruções:
 
@@ -331,7 +331,7 @@ Para testar as válvulas: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_valv
 
 Para testar a bomba: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_bomba.cpp -o tests/build/test_bomba && ./tests/build/test_bomba
 
-Para testar o alarmes: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_alarmes.cpp -o tests/build/test_alarmes && ./tests/build/test_alarmes
+Para testar os alarmes: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_alarmes.cpp -o tests/build/test_alarmes && ./tests/build/test_alarmes
 
 Para testar o funcionamento da ETA: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_eta.cpp -o tests/build/test_eta && ./tests/build/test_eta
 
