@@ -283,11 +283,48 @@ Alterações do sistema por meio do ID_DUPLA:
 2. Após isso, nesse mesmo terminal, utilize o seguinte comando: ./eta
 
 3. Depois de executar o código c++, abra um novo terminal e aplique o seguinte comando para abrir o supervisório StreamLit: python -m streamlit run supervisorio.py
+
 4. Após todas essas aplicações, o sistema deve rodar sem nenhum problema.
 
-# UML 
+# Como executar os testes do programa
 
-// Atualziar a imagem depois//
+1. Abra o terminal integrado ao arquivo de testes
+
+2. Veriricar se tem o PIP do pyhton instalado. Se não tiver, utilize o seguinte comando no terminal: python -m pip install pytest
+
+3. Caso estiver instalado, siga as seguintes instruções:
+
+Para testar o contrato Eta entre o c++ e o python: python -m pytest test_contrato_eta.py -v
+
+Para testar os comandos de atuação: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_comando.cpp -o tests/build/test_comando && ./tests/build/test_comando 
+
+Para testar o controlador utilize: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_controlador.cpp -o tests/build/test_controlador && ./tests/build/test_controlador
+
+Para testar os sensores: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_sensor.cpp -o tests/build/test_sensor && ./tests/build/test_sensor
+
+Para testar o banco de dados Sqlite: python -m pytest tests/test_banco_sqlite.py -v
+
+Para testar o reservatório: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_reservatorio.cpp -o tests/build/test_reservatorio && ./tests/build/test_reservatorio
+
+Para testar o inversor: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_inversor.cpp -o tests/build/test_inversor && ./tests/build/test_inversor
+
+Para testar as válvulas: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_valvulas.cpp -o tests/build/test_valvulas && ./tests/build/test_valvulas
+
+Para testar a bomba: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_bomba.cpp -o tests/build/test_bomba && ./tests/build/test_bomba
+
+Para testar o alarmes: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_alarmes.cpp -o tests/build/test_alarmes && ./tests/build/test_alarmes
+
+Para testar o funcionamento da ETA: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_eta.cpp -o tests/build/test_eta && ./tests/build/test_eta
+
+Para testar a malha fechada: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_malha_fechada.cpp -o tests/build/test_malha_fechada && ./tests/build/test_malha_fechada
+
+Para testar o supervisório JSON: python -m pytest tests/test_supervisorio_json.py -v
+
+Para testar a interface dos comandos utilize: python -m pytest tests/test_interface_comandos.py -v
+
+Para realizar um teste de estresse no reservatório: g++ -std=c++17 -Wall -Wextra -pedantic tests/test_estresse_reservatorio.cpp -o tests/build/test_estresse_reservatorio && ./tests/build/test_estresse_reservatorio
+
+Para testar a interface do supervisório: python -m pytest tests/test_supervisorio_interno.py -v
 
 
 # Histórico de desenvolvimento do projeto
@@ -344,6 +381,6 @@ Alterações do sistema por meio do ID_DUPLA:
 - [x] Histórico em CSV ou SQLite.
 - [x] README atualizado.
 - [x] AI_LOG preenchido.
-- [ ] Testes executáveis.
+- [x] Testes executáveis.
 - [ ] Issues, commits ou pull requests mostram participação dos dois integrantes.
 - [ ] Apresentação técnica preparada.
